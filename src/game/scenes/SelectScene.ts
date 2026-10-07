@@ -1,8 +1,8 @@
-import Phaser from 'phaser';
-import { ACTION_LABEL, ACTION_ORDER, CHARACTERS, ELEMENT_LABEL, ROSTER } from '../../shared/characters';
+import * as Phaser from 'phaser';
+import { CHARACTERS, ELEMENT_LABEL, ROSTER, SLOT_LABEL, SLOT_ORDER } from '../../shared/characters';
 import type { CharacterId } from '../../shared/types';
-import { spriteKey } from '../sprites';
-import type { DuelData, SelectData } from '../types';
+import { animKey, facesLeft, portraitKey, standingTexture } from '../sprites';
+import type { ArenaData, SelectData } from '../types';
 import { bar, COLORS, fit, HEIGHT, panel, text, timeBackground, WIDTH } from '../ui';
 
 const CELL = 84;
@@ -46,7 +46,7 @@ export class SelectScene extends Phaser.Scene {
     ROSTER.forEach((id, i) => {
       const x = startX + i * (CELL + GAP);
       panel(this, x - CELL / 2, GRID_Y - CELL / 2, CELL, CELL);
-      const img = fit(this.add.image(x, GRID_Y, spriteKey(this, id, 'portrait')), CELL - 8, CELL - 8);
+      const img = fit(this.add.image(x, GRID_Y, portraitKey(id)), CELL - 8, CELL - 8);
       img.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.pointerPick(i));
     });
 
@@ -87,7 +87,8 @@ export class SelectScene extends Phaser.Scene {
     panel(this, x, y, 300, 300);
     const colorHex = `#${color.toString(16).padStart(6, '0')}`;
     text(this, x + 14, y + 14, tag, 10, colorHex);
-    const sprite = this.add.image(side === 'left' ? x + 70 : x + 230, y + 120, spriteKey(this, 'crono', 'battle'));
+    const first = standingTexture(this, 'crono');
+    const sprite = this.add.sprite(side === 'left' ? x + 70 : x + 230, y + 120, first.key, first.frame);
     const name = text(this, x + 14, y + 210, '', 16, COLORS.gold);
     const title = text(this, x + 14, y + 234, '', 8, COLORS.muted);
     const info = text(this, side === 'left' ? x + 130 : x + 14, y + 40, '', 8, COLORS.text, { wordWrap: { width: 156 } });
@@ -106,12 +107,12 @@ export class SelectScene extends Phaser.Scene {
     return {
       update: (id, locked, pulse = false) => {
         const c = CHARACTERS[id];
-        sprite.setTexture(spriteKey(this, id, 'battle')).setFlipX(side === 'right');
+        sprite.play(animKey(id, locked ? 'victory' : 'idle'), true).setFlipX((side === 'right') !== facesLeft(this, id));
         fit(sprite, 112, 168);
         name.setText(c.name.toUpperCase());
         title.setText(`${c.title} · ${c.era}`);
         info.setText(
-          `${ELEMENT_LABEL[c.element]}\n\n` + ACTION_ORDER.map((a) => `${ACTION_LABEL[a]}:\n ${c.abilities[a].name}`).join('\n'),
+          `${ELEMENT_LABEL[c.element]}\n\n` + SLOT_ORDER.map((a, i) => `${'YUIO'[i]} ${SLOT_LABEL[a]}:\n  ${c.abilities[a].name}`).join('\n'),
         );
         hpBar(c.stats.maxHp / 420);
         atkBar(c.stats.atk / 28);
@@ -197,8 +198,8 @@ export class SelectScene extends Phaser.Scene {
     const fight = text(this, WIDTH / 2, 250, 'LUTEM!', 48, '#ff5a5a').setOrigin(0.5).setStroke('#000', 8).setScale(0);
     this.tweens.add({ targets: fight, scale: 1, duration: 300, ease: 'Back.out' });
     this.time.delayedCall(1100, () => {
-      const data: DuelData = { mode: this.mode, p1: ROSTER[this.players[0].index], p2: ROSTER[this.players[1].index] };
-      this.scene.start('Duel', data);
+      const data: ArenaData = { mode: this.mode, p1: ROSTER[this.players[0].index], p2: ROSTER[this.players[1].index] };
+      this.scene.start('Arena', data);
     });
   }
 

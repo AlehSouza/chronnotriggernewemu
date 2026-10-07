@@ -1,4 +1,9 @@
 node_modules
-dist
+out
+.next
+next-env.d.ts
+standalone
+sprites-src
 *.log
 .DS_Store
+*.tsbuildinfo

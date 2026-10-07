@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 
 export const WIDTH = 960;
 export const HEIGHT = 540;
@@ -134,11 +134,12 @@ export function bar(
   w: number,
   h: number,
   color: number,
+  depth = 0,
 ): (ratio: number, animate?: boolean) => void {
-  const bg = scene.add.graphics();
+  const bg = scene.add.graphics().setDepth(depth);
   bg.fillStyle(0x000000, 0.7);
   bg.fillRect(x - 1, y - 1, w + 2, h + 2);
-  const fill = scene.add.rectangle(x, y, w, h, color).setOrigin(0, 0);
+  const fill = scene.add.rectangle(x, y, w, h, color).setOrigin(0, 0).setDepth(depth + 2);
   return (ratio, animate = true) => {
     const target = Math.max(0, Math.min(1, ratio)) * w;
     if (animate) scene.tweens.add({ targets: fill, width: target, duration: 300 });
@@ -147,9 +148,10 @@ export function bar(
 }
 
 /** Escala uma imagem para caber numa caixa, mantendo pixels inteiros quando possível. */
-export function fit(img: Phaser.GameObjects.Image, maxW: number, maxH: number): Phaser.GameObjects.Image {
+export function fit<T extends Phaser.GameObjects.Image | Phaser.GameObjects.Sprite>(img: T, maxW: number, maxH: number): T {
   const scale = Math.min(maxW / img.width, maxH / img.height);
-  return img.setScale(scale >= 1 ? Math.floor(scale) : scale);
+  img.setScale(scale >= 1 ? Math.floor(scale) : scale);
+  return img;
 }
 
 /** Fundo animado com estrelas e um portal do tempo. */

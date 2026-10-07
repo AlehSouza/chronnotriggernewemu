@@ -1,59 +1,71 @@
 # Chrono Duel
 
-Jogo de duelo 1x1 com os personagens jogáveis de Chrono Trigger (Crono, Marle, Lucca, Frog, Robo, Ayla e Magus).
-Cada personagem tem 4 ações: **Ataque**, **Parry**, **Habilidade** e **Ultimate**.
+Duelo 1x1 **em tempo real** numa arena 2.5D com os personagens jogáveis de Chrono Trigger
+(Crono, Marle, Lucca, Frog, Robo, Ayla e Magus). Você anda pelo cenário, desvia das habilidades e usa
+4 ações: **Ataque**, **Parry**, **Habilidade** e **Ultimate**.
 
 ## Como rodar
 
 ```bash
 npm install
-npm run dev      # abre em http://localhost:5173
-npm test         # testes do motor de duelo
-npm run build    # gera a versão estática em dist/
+npm run dev               # http://localhost:3000
+npm test                  # testes da simulação
+npm run build             # site estático em out/ (npm start serve essa pasta)
+npm run build:standalone  # página única em standalone/, sem Next.js (para testes rápidos)
 ```
-
-## Stack
-
-- **TypeScript + Vite + Phaser 3.** Phaser cuida de sprites, animação, tweens, teclado/mouse e escala em pixel art;
-  Vite dá recarga instantânea e build estático. TypeScript mantém o contrato entre cliente e servidor tipado.
-- **`src/shared/` é lógica pura**, sem Phaser nem DOM: personagens, motor de duelo (`engine.ts`), IA e o contrato
-  socket.io (`protocol.ts`). O servidor Node online vai importar esse mesmo código e ser a autoridade do duelo.
-- **`src/game/`** é só apresentação: cenas do Phaser (menu, seleção, habilidades, duelo).
-
-## Regras do duelo
-
-Os dois jogadores escolhem a ação **ao mesmo tempo, em segredo**, e o turno é resolvido junto
-(isso funciona igual no local e no online, sem vantagem de quem tem menos latência).
-
-| Ação | Efeito |
-| --- | --- |
-| Ataque | Dano físico. 10% de chance de crítico. Sem custo. |
-| Parry | Contra **ataque**: devolve 60% do dano. Contra **habilidade**: bloqueia tudo (inclusive efeitos). Contra **ultimate**: bloqueia metade. Não pode ser usado dois turnos seguidos. |
-| Habilidade | Custa MP. Cada personagem tem a sua (dano, cura, queimadura, buff, debuff). |
-| Ultimate | Precisa da barra TECH cheia. A barra enche a cada turno, ao causar/receber dano e ao acertar um parry. |
-
-MP regenera 5 por turno. Todos os números ficam em `RULES` (`src/shared/engine.ts`) e nos personagens
-(`src/shared/characters.ts`).
 
 ## Controles
 
-- **Menu/Habilidades:** setas ou W/S, Enter, Esc para voltar.
-- **Seleção:** vs CPU usa setas ou A/D + Enter. Em 2 jogadores, P1 usa A/D + F e P2 usa setas + Enter. Clique também funciona.
-- **Duelo:** teclas 1 a 4 ou clique. No modo local, o P1 escolhe, a tela esconde a escolha e o P2 escolhe.
+| | Jogador 1 | Jogador 2 (mesmo teclado) |
+| --- | --- | --- |
+| Mover | W A S D | Setas |
+| Ataque | Y | 7 ou Numpad 1 |
+| Parry | U | 8 ou Numpad 2 |
+| Habilidade | I | 9 ou Numpad 3 |
+| Ultimate | O | 0 ou Numpad 4 |
+
+W/S (ou ↑/↓) andam em **profundidade**: sair da faixa do oponente é o jeito de desviar de golpes e projéteis.
+Esc pausa.
+
+## Regras
+
+- **Ataque**: golpe ou disparo básico, sem custo.
+- **Parry**: janela curta de defesa. Contra ataque normal devolve 60% do dano e atordoa; contra habilidade
+  bloqueia tudo; projéteis voltam para quem atirou; ultimate só é bloqueada pela metade. Errar o tempo deixa
+  você parado por um instante.
+- **Habilidade**: gasta MP e tem recarga. Cada personagem tem a sua (giro, projétil, avanço, cura, área no alvo).
+- **Ultimate**: precisa da barra ULT cheia. Ela enche com o tempo, causando e recebendo dano e acertando parry.
+  Áreas marcadas no chão e anéis que crescem avisam onde o golpe vai cair: dá tempo de fugir.
+- Partida de 99 segundos. Vence quem nocautear ou quem tiver mais HP (proporcional) no fim.
+
+Todos os números ficam em `RULES` (`src/shared/sim.ts`) e nos personagens (`src/shared/characters.ts`).
+
+## Stack
+
+- **Next.js** (App Router, exportado como site estático) como casca da aplicação. A página monta o jogo só no
+  navegador (`src/components/GameCanvas.tsx`).
+- **Phaser 3** desenha e anima o jogo (`src/game/`): menu, seleção estilo Mortal Kombat, "Como jogar" e a arena.
+- **`src/shared/` é lógica pura** (sem Phaser, React ou DOM): a simulação a 60 quadros/s, determinística, a IA da CPU e
+  o contrato do socket.io (`protocol.ts`). O servidor online vai rodar essa mesma simulação como autoridade; os
+  clientes só mandam entradas.
 
 ## Sprites
 
-Por enquanto cada personagem é um boneco pixelado gerado por código com as cores dele.
-Para usar sprites reais:
+Hoje cada personagem é um boneco pixelado gerado por código. Para usar os sprites reais do
+[videogamesprites.net](https://www.videogamesprites.net/ChronoTrigger/Party/):
 
-1. Coloque os arquivos em `public/assets/characters/<id>/` (ex.: `public/assets/characters/crono/battle.png`).
-2. Registre em `SPRITE_MANIFEST` (`src/game/sprites.ts`). O que não estiver registrado continua usando o boneco.
+1. Baixe os GIFs de cada personagem para `sprites-src/<id>/` (ex.: `sprites-src/crono/Crono - Victory.gif`).
+2. Rode `npm run sprites`. O script converte cada GIF animado numa spritesheet em `public/sprites/<id>/`,
+   escolhe a animação pelo nome do arquivo (parado, andar, ataque, magia, dano, defesa, nocaute, vitória) e gera
+   `src/game/sprites.generated.json`.
+3. Se o nome não bater, crie `sprites-src/<id>/map.json`, por exemplo
+   `{ "idle": "Crono - Battle.gif", "facesLeft": true }`.
 
-Fontes de referência: https://www.videogamesprites.net/ChronoTrigger/ . Os sprites de Chrono Trigger pertencem à
-Square Enix; mantenha o uso como projeto de fã não comercial.
+Animação sem arquivo continua usando o boneco. Os sprites de Chrono Trigger pertencem à Square Enix; mantenha o
+projeto como fã e sem fins comerciais.
 
 ## Próximos passos
 
-- Sprites reais e animações por ação (ataque, dano, parry, vitória).
-- Servidor `server/` com Node + socket.io usando `src/shared/engine.ts` e os eventos de `src/shared/protocol.ts`.
-- Mais personagens e balanceamento.
+- Importar os sprites reais.
+- Servidor `server/` com Node + socket.io rodando `src/shared/sim.ts` e os eventos de `src/shared/protocol.ts`.
+  Ele roda à parte do Next (hospedagem estática não mantém WebSocket).

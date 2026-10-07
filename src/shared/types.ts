@@ -1,39 +1,68 @@
-// Tipos puros do jogo. Nada aqui depende do Phaser nem do navegador,
+// Tipos puros do jogo. Nada aqui depende do Phaser, React ou navegador,
 // para que o mesmo código rode no servidor socket.io no futuro.
 
 export type CharacterId = 'crono' | 'marle' | 'lucca' | 'frog' | 'robo' | 'ayla' | 'magus';
 
 export type Element = 'raio' | 'agua' | 'fogo' | 'sombra' | 'fisico';
 
-/** As 4 ações de todo personagem. */
-export type ActionKind = 'attack' | 'parry' | 'skill' | 'ultimate';
+/** As 4 ações de todo personagem (teclas Y, U, I, O). */
+export type Slot = 'attack' | 'parry' | 'skill' | 'ultimate';
 
 export type StatusId = 'burn' | 'defDown' | 'atkUp' | 'regen';
 
 export interface StatusApply {
   id: StatusId;
-  turns: number;
+  /** Duração em segundos. */
+  seconds: number;
 }
 
+/**
+ * Como a habilidade acontece no espaço:
+ * - melee: golpe na frente de quem usa
+ * - projectile: disparo que anda em linha reta pela faixa de profundidade
+ * - aoeSelf: área em volta de quem usa
+ * - aoeTarget: área marcada no chão onde o alvo estava; cai depois de um tempo (dá para desviar)
+ * - dash: avança causando dano no caminho
+ * - buff: cura ou efeito em si mesmo
+ * - parry: janela de defesa
+ */
+export type AbilityKind = 'melee' | 'projectile' | 'aoeSelf' | 'aoeTarget' | 'dash' | 'buff' | 'parry';
+
 export interface Ability {
-  kind: ActionKind;
+  slot: Slot;
+  kind: AbilityKind;
   name: string;
   description: string;
-  /** Poder base do golpe. 0 = não causa dano. */
+  /** Poder total (dividido entre os golpes). 0 = sem dano. */
   power: number;
-  /** Qual atributo escala o dano. */
   scaling: 'atk' | 'mag';
   element: Element;
-  /** Custo de MP (só habilidades). */
   mpCost: number;
-  /** Número de golpes, só para animação. */
+  /** Recarga em segundos depois de usar. */
+  cooldown: number;
+  /** Quadros (60/s) antes do efeito sair. */
+  startup: number;
+  /** Quadros em que o efeito está ativo. */
+  active: number;
+  /** Quadros parado depois do efeito. */
+  recovery: number;
+  /** Alcance do golpe, raio da área ou distância do avanço, em pixels. */
+  range: number;
+  /** Tolerância de profundidade (quão alinhado o alvo precisa estar). */
+  depth: number;
+  /** Velocidade do projétil em px por quadro. */
+  speed?: number;
   hits?: number;
-  /** Cura uma fração do HP máximo de quem usa. */
+  knockback?: number;
   healPct?: number;
   applyToTarget?: StatusApply[];
   applyToSelf?: StatusApply[];
-  /** Poder extra proporcional ao HP perdido (ex.: Frog Squash). 1 = +100% com HP quase zerado. */
+  /** Poder extra proporcional ao HP perdido (Frog Squash). */
   missingHpBonus?: number;
+  /** Quem usa salta para o local da área (Frog Squash). */
+  leapToTarget?: boolean;
+  /** Cor dos efeitos visuais. */
+  color: number;
 }
 
 export interface CharacterStats {
@@ -42,6 +71,8 @@ export interface CharacterStats {
   atk: number;
   mag: number;
   def: number;
+  /** Velocidade de andar em px por quadro. */
+  speed: number;
 }
 
 export interface Palette {
@@ -60,5 +91,5 @@ export interface CharacterDef {
   bio: string;
   stats: CharacterStats;
   palette: Palette;
-  abilities: Record<ActionKind, Ability>;
+  abilities: Record<Slot, Ability>;
 }

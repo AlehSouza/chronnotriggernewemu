@@ -1,5 +1,5 @@
-import Phaser from 'phaser';
-import { generatePlaceholders, preloadRealSprites } from '../sprites';
+import * as Phaser from 'phaser';
+import { createCharacterAnims, preloadRealSprites } from '../sprites';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -13,7 +13,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    generatePlaceholders(this);
+    createCharacterAnims(this);
     this.scene.start('Menu');
   }
 }

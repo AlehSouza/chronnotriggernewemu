@@ -1,86 +1,194 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { CHARACTERS, ROSTER } from '../shared/characters';
 import type { CharacterId } from '../shared/types';
+import { SPRITE_MANIFEST, type AnimName } from './spriteManifest';
 
-/**
- * Sprites reais (opcionais). Coloque os arquivos em public/assets/characters/<id>/
- * e registre aqui. Enquanto um personagem não tiver arquivo, o jogo usa um boneco
- * gerado por código com as cores dele.
- *
- * Exemplo:
- *   crono: { portrait: 'assets/characters/crono/portrait.png', battle: 'assets/characters/crono/battle.png' },
- */
-export const SPRITE_MANIFEST: Partial<Record<CharacterId, { portrait?: string; battle?: string }>> = {};
+export type { AnimName };
 
-export type SpriteKind = 'portrait' | 'battle';
+export const ANIMS: AnimName[] = ['idle', 'walk', 'attack', 'cast', 'hurt', 'parry', 'ko', 'victory'];
 
-const realKey = (id: CharacterId, kind: SpriteKind) => `real-${kind}-${id}`;
-const placeholderKey = (id: CharacterId, kind: SpriteKind) => `ph-${kind}-${id}`;
+/** Quadros do boneco gerado por código, por animação. */
+const PLACEHOLDER_FRAMES: Record<AnimName, Pose[]> = {
+  idle: ['idle', 'idle2'],
+  walk: ['walk1', 'idle', 'walk2', 'idle'],
+  attack: ['attack'],
+  cast: ['cast'],
+  hurt: ['hurt'],
+  parry: ['parry'],
+  ko: ['ko'],
+  victory: ['cast', 'idle'],
+};
+
+type Pose = 'idle' | 'idle2' | 'walk1' | 'walk2' | 'attack' | 'cast' | 'hurt' | 'parry' | 'ko';
+const POSES: Pose[] = ['idle', 'idle2', 'walk1', 'walk2', 'attack', 'cast', 'hurt', 'parry', 'ko'];
+
+const realSheetKey = (id: CharacterId, anim: AnimName) => `real-${id}-${anim}`;
+const poseKey = (id: CharacterId, pose: Pose) => `ph-${id}-${pose}`;
+export const animKey = (id: CharacterId, anim: AnimName) => `${id}-${anim}`;
+export const portraitKey = (id: CharacterId) => `portrait-${id}`;
+
+/** O sprite real desse personagem olha para a esquerda? (o boneco provisório olha para a direita) */
+export function facesLeft(scene: Phaser.Scene, id: CharacterId): boolean {
+  return !!SPRITE_MANIFEST[id]?.facesLeft && scene.textures.exists(realSheetKey(id, 'idle'));
+}
 
 export function preloadRealSprites(loader: Phaser.Loader.LoaderPlugin): void {
   for (const id of ROSTER) {
     const entry = SPRITE_MANIFEST[id];
-    if (entry?.portrait) loader.image(realKey(id, 'portrait'), entry.portrait);
-    if (entry?.battle) loader.image(realKey(id, 'battle'), entry.battle);
+    if (!entry) continue;
+    for (const [anim, sheet] of Object.entries(entry.anims)) {
+      loader.spritesheet(realSheetKey(id, anim as AnimName), sheet.file, {
+        frameWidth: sheet.frameWidth,
+        frameHeight: sheet.frameHeight,
+      });
+    }
+    if (entry.portrait) loader.image(`real-portrait-${id}`, entry.portrait);
   }
 }
 
-export function spriteKey(scene: Phaser.Scene, id: CharacterId, kind: SpriteKind): string {
-  const real = realKey(id, kind);
-  return scene.textures.exists(real) ? real : placeholderKey(id, kind);
+/**
+ * Cria as animações de todos os personagens. Se houver spritesheet real para
+ * uma animação, usa ela; se não, usa o boneco gerado por código.
+ */
+export function createCharacterAnims(scene: Phaser.Scene): void {
+  for (const id of ROSTER) {
+    drawPlaceholderPoses(scene, id);
+    for (const anim of ANIMS) {
+      const sheet = SPRITE_MANIFEST[id]?.anims[anim];
+      const key = animKey(id, anim);
+      if (scene.anims.exists(key)) continue;
+      const repeat = anim === 'idle' || anim === 'walk' || anim === 'victory' ? -1 : 0;
+      if (sheet && scene.textures.exists(realSheetKey(id, anim))) {
+        scene.anims.create({
+          key,
+          frames: scene.anims.generateFrameNumbers(realSheetKey(id, anim), {}),
+          frameRate: sheet.fps ?? 8,
+          repeat,
+        });
+      } else {
+        scene.anims.create({
+          key,
+          frames: PLACEHOLDER_FRAMES[anim].map((p) => ({ key: poseKey(id, p) })),
+          frameRate: anim === 'walk' ? 8 : 3,
+          repeat,
+        });
+      }
+    }
+    const realPortrait = `real-portrait-${id}`;
+    if (scene.textures.exists(realPortrait)) {
+      scene.textures.renameTexture(realPortrait, portraitKey(id));
+    } else if (!scene.textures.exists(portraitKey(id))) {
+      drawPortrait(scene, id);
+    }
+  }
 }
 
-/** Desenha um boneco pixelado 16x24 por personagem. Mostrado com escala inteira. */
-export function generatePlaceholders(scene: Phaser.Scene): void {
-  for (const id of ROSTER) {
-    const { palette } = CHARACTERS[id];
+/** Textura parada para menus (primeiro quadro do idle). */
+export function standingTexture(scene: Phaser.Scene, id: CharacterId): { key: string; frame?: number } {
+  const real = realSheetKey(id, 'idle');
+  return scene.textures.exists(real) ? { key: real, frame: 0 } : { key: poseKey(id, 'idle') };
+}
+
+function drawPlaceholderPoses(scene: Phaser.Scene, id: CharacterId) {
+  const { palette } = CHARACTERS[id];
+  const dark = Phaser.Display.Color.IntegerToColor(palette.outfit).darken(35).color;
+  const robo = id === 'robo';
+  const body = robo ? palette.hair : palette.outfit;
+  const limbs = robo ? palette.outfit : palette.skin;
+
+  for (const pose of POSES) {
+    const key = poseKey(id, pose);
+    if (scene.textures.exists(key)) continue;
     const g = scene.make.graphics({}, false);
-    const px = (x: number, y: number, w: number, h: number, color: number) => {
-      g.fillStyle(color, 1);
+    const px = (x: number, y: number, w: number, h: number, c: number) => {
+      g.fillStyle(c, 1);
       g.fillRect(x, y, w, h);
     };
-    const dark = Phaser.Display.Color.IntegerToColor(palette.outfit).darken(35).color;
+    // Tela de 24x28: o personagem tem 16 de largura, sobra espaço para braço e arma.
+    const ox = 4;
+    const bob = pose === 'idle2' ? 1 : 0;
 
-    if (id === 'robo') {
-      px(4, 2, 8, 7, palette.skin); // cabeça
-      px(5, 4, 2, 2, palette.accent);
-      px(9, 4, 2, 2, palette.accent);
-      px(3, 9, 10, 8, palette.hair); // corpo
-      px(1, 10, 2, 6, palette.outfit);
-      px(13, 10, 2, 6, palette.outfit);
-      px(4, 17, 3, 6, dark);
-      px(9, 17, 3, 6, dark);
-    } else {
-      px(4, 3, 8, 7, palette.skin); // rosto
-      px(3, 1, 10, 3, palette.hair); // cabelo
-      px(3, 3, 2, 4, palette.hair);
-      if (id === 'crono') px(5, 0, 7, 2, palette.hair);
-      if (id === 'magus') px(2, 3, 2, 9, palette.hair);
-      px(6, 6, 1, 1, 0x1a1a2a); // olhos
-      px(9, 6, 1, 1, 0x1a1a2a);
-      px(4, 10, 8, 7, palette.outfit); // tronco
-      px(2, 11, 2, 5, palette.skin); // braços
-      px(12, 11, 2, 5, palette.skin);
-      px(4, 16, 8, 1, palette.accent); // cinto
-      px(5, 17, 2, 6, dark); // pernas
-      px(9, 17, 2, 6, dark);
-      if (id === 'magus') px(1, 9, 3, 14, palette.accent); // capa
+    if (pose === 'ko') {
+      px(2, 22, 18, 5, body);
+      px(18, 21, 6, 6, robo ? palette.skin : palette.skin);
+      px(19, 20, 5, 2, palette.hair);
+      px(0, 24, 3, 3, dark);
+      g.generateTexture(key, 24, 28);
+      g.destroy();
+      continue;
     }
-    px(14, 4, 1, 13, palette.accent); // arma / detalhe
-    g.generateTexture(placeholderKey(id, 'battle'), 16, 24);
 
-    // Retrato: fundo com a cor do elemento e o boneco centralizado.
-    g.clear();
-    g.fillStyle(dark, 1);
-    g.fillRect(0, 0, 32, 32);
-    g.fillStyle(palette.outfit, 0.5);
-    g.fillRect(0, 20, 32, 12);
-    g.generateTexture(`${placeholderKey(id, 'portrait')}-bg`, 32, 32);
+    const lean = pose === 'hurt' ? -2 : pose === 'attack' ? 2 : 0;
+    const top = 4 + bob;
+    // Cabeça
+    if (robo) {
+      px(ox + 4 + lean, top + 1, 8, 7, palette.skin);
+      px(ox + 5 + lean, top + 3, 2, 2, palette.accent);
+      px(ox + 9 + lean, top + 3, 2, 2, palette.accent);
+    } else {
+      px(ox + 4 + lean, top + 2, 8, 7, palette.skin);
+      px(ox + 3 + lean, top, 10, 3, palette.hair);
+      px(ox + 3 + lean, top + 2, 2, 4, palette.hair);
+      if (id === 'crono') px(ox + 5 + lean, top - 2, 7, 2, palette.hair);
+      if (id === 'magus') px(ox + 2 + lean, top + 2, 2, 9, palette.hair);
+      if (id === 'ayla') px(ox + 11 + lean, top + 2, 2, 7, palette.hair);
+      const eye = pose === 'hurt' ? 0xffffff : 0x1a1a2a;
+      px(ox + 9 + lean, top + 5, 1, 1, eye);
+      px(ox + 11 + lean, top + 5, 1, 1, eye);
+    }
+    // Tronco
+    px(ox + 4 + lean / 2, top + 9, 8, 7, body);
+    px(ox + 4 + lean / 2, top + 15, 8, 1, palette.accent);
+    if (id === 'magus') px(ox + 1, top + 8, 3, 14, palette.accent);
+
+    // Pernas
+    const legY = top + 16;
+    const legH = 23 - bob - legY + 4;
+    if (pose === 'walk1') {
+      px(ox + 3, legY, 3, legH, dark);
+      px(ox + 10, legY, 3, legH - 2, dark);
+    } else if (pose === 'walk2') {
+      px(ox + 5, legY, 3, legH - 2, dark);
+      px(ox + 8, legY, 3, legH, dark);
+    } else {
+      px(ox + 5, legY, 2, legH, dark);
+      px(ox + 9, legY, 2, legH, dark);
+    }
+
+    // Braços e arma
+    if (pose === 'attack') {
+      px(ox + 12, top + 10, 6, 2, limbs);
+      px(ox + 17, top + 4, 2, 12, palette.accent);
+    } else if (pose === 'cast') {
+      px(ox + 2, top + 2, 2, 7, limbs);
+      px(ox + 12, top + 2, 2, 7, limbs);
+      px(ox + 11, top - 1, 4, 3, palette.accent);
+    } else if (pose === 'parry') {
+      px(ox + 12, top + 8, 4, 2, limbs);
+      px(ox + 15, top + 2, 2, 16, 0x8fe0ff);
+    } else {
+      px(ox + 2 + lean / 2, top + 10, 2, 5, limbs);
+      px(ox + 12 + lean / 2, top + 10, 2, 5, limbs);
+      px(ox + 14 + lean / 2, top + 5, 1, 12, palette.accent);
+    }
+    g.generateTexture(key, 24, 28);
     g.destroy();
-
-    const rt = scene.make.renderTexture({ x: 0, y: 0, width: 32, height: 32 }, false);
-    rt.draw(`${placeholderKey(id, 'portrait')}-bg`, 0, 0);
-    rt.draw(placeholderKey(id, 'battle'), 8, 6);
-    rt.saveTexture(placeholderKey(id, 'portrait'));
   }
+}
+
+function drawPortrait(scene: Phaser.Scene, id: CharacterId) {
+  const { palette } = CHARACTERS[id];
+  const dark = Phaser.Display.Color.IntegerToColor(palette.outfit).darken(35).color;
+  const bgKey = `${portraitKey(id)}-bg`;
+  const g = scene.make.graphics({}, false);
+  g.fillStyle(dark, 1);
+  g.fillRect(0, 0, 32, 32);
+  g.fillStyle(palette.outfit, 0.5);
+  g.fillRect(0, 20, 32, 12);
+  g.generateTexture(bgKey, 32, 32);
+  g.destroy();
+  const rt = scene.make.renderTexture({ x: 0, y: 0, width: 32, height: 32 }, false);
+  rt.draw(bgKey, 0, 0);
+  rt.draw(poseKey(id, 'idle'), 4, 4);
+  rt.saveTexture(portraitKey(id));
 }

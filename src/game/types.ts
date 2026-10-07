@@ -6,7 +6,7 @@ export interface SelectData {
   mode: GameMode;
 }
 
-export interface DuelData {
+export interface ArenaData {
   mode: GameMode;
   p1: CharacterId;
   p2: CharacterId;
