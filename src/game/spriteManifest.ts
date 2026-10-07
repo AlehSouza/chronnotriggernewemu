@@ -1,7 +1,20 @@
 import type { CharacterId } from '../shared/types';
 import generated from './sprites.generated.json';
 
-export type AnimName = 'idle' | 'walk' | 'attack' | 'cast' | 'hurt' | 'parry' | 'ko' | 'victory';
+/** idle/walk são de lado; _down = de frente, _up = de costas (vista de cima, como em Chrono Trigger). */
+export type AnimName =
+  | 'idle'
+  | 'idle_down'
+  | 'idle_up'
+  | 'walk'
+  | 'walk_down'
+  | 'walk_up'
+  | 'attack'
+  | 'cast'
+  | 'hurt'
+  | 'parry'
+  | 'ko'
+  | 'victory';
 
 export interface SheetDef {
   /** Caminho a partir de public/, ex.: 'sprites/crono/walk.png'. */

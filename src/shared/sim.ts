@@ -5,7 +5,8 @@
 // socket.io pode rodar a mesma simulação como autoridade e os clientes só
 // mandam entradas e desenham o que recebem.
 //
-// Coordenadas: x é horizontal, y é profundidade no chão (0 = fundo, ARENA.maxY = frente).
+// Coordenadas: vista de cima (3/4, como os mapas de Chrono Trigger). x e y são o chão,
+// na mesma escala; a tela só achata o y um pouco ao desenhar.
 
 import { CHARACTERS } from './characters';
 import { nextRandom } from './rng';
@@ -13,10 +14,7 @@ import type { Ability, CharacterId, Slot, StatusId } from './types';
 
 export const FPS = 60;
 
-export const ARENA = { minX: 40, maxX: 920, minY: 0, maxY: 150 } as const;
-
-/** Um círculo no chão vira uma elipse achatada nessa proporção. */
-export const FLOOR_SQUASH = 0.45;
+export const ARENA = { minX: 40, maxX: 920, minY: 40, maxY: 420 } as const;
 
 export const RULES = {
   matchSeconds: 99,
@@ -37,9 +35,8 @@ export const RULES = {
   regenPctPerSecond: 0.03,
   atkUpMultiplier: 1.3,
   defDownMultiplier: 0.7,
-  depthSpeedFactor: 0.7,
-  projectileHitX: 22,
-  dashHitX: 46,
+  projectileHitR: 22,
+  dashHitR: 46,
   /** Quadros que o conjurador fica parado ao marcar uma área no alvo. */
   aoeTargetCast: 16,
 } as const;
@@ -62,6 +59,9 @@ export interface ActionState {
   slot: Slot;
   frame: number;
   hitsDone: number;
+  /** Direção da mira, travada ao usar (vetor unitário). */
+  ax: number;
+  ay: number;
 }
 
 export interface StatusInstance {
@@ -74,7 +74,9 @@ export interface Fighter {
   characterId: CharacterId;
   x: number;
   y: number;
-  facing: 1 | -1;
+  /** Para onde o personagem olha (vetor unitário). */
+  lookX: number;
+  lookY: number;
   hp: number;
   mp: number;
   gauge: number;
@@ -94,6 +96,7 @@ export interface Projectile {
   x: number;
   y: number;
   vx: number;
+  vy: number;
   traveled: number;
   reflected: boolean;
 }
@@ -155,8 +158,9 @@ function createFighter(side: Side, id: CharacterId): Fighter {
     side,
     characterId: id,
     x: side === 0 ? 220 : 740,
-    y: ARENA.maxY / 2,
-    facing: side === 0 ? 1 : -1,
+    y: (ARENA.minY + ARENA.maxY) / 2,
+    lookX: side === 0 ? 1 : -1,
+    lookY: 0,
     hp: stats.maxHp,
     mp: stats.maxMp,
     gauge: 0,
@@ -195,10 +199,18 @@ export function actionLength(a: Ability): number {
   return a.startup + a.active + a.recovery;
 }
 
-export function inFloorEllipse(px: number, py: number, cx: number, cy: number, radius: number): boolean {
-  const dx = (px - cx) / radius;
-  const dy = (py - cy) / (radius * FLOOR_SQUASH);
-  return dx * dx + dy * dy <= 1;
+export function inCircle(px: number, py: number, cx: number, cy: number, radius: number): boolean {
+  const dx = px - cx;
+  const dy = py - cy;
+  return dx * dx + dy * dy <= radius * radius;
+}
+
+/** Vetor unitário de (x1,y1) para (x2,y2); usa o fallback se os pontos coincidem. */
+export function dirTo(x1: number, y1: number, x2: number, y2: number, fx = 1, fy = 0): [number, number] {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.hypot(dx, dy);
+  return len < 1 ? [fx, fy] : [dx / len, dy / len];
 }
 
 function hasStatus(f: Fighter, id: StatusId): boolean {
@@ -290,16 +302,18 @@ function tickTimers(ctx: Ctx, f: Fighter) {
 
 function move(f: Fighter, foe: Fighter, input: Input) {
   const { speed } = CHARACTERS[f.characterId].stats;
-  let mx = input.moveX;
-  let my = input.moveY * RULES.depthSpeedFactor;
+  let mx: number = input.moveX;
+  let my: number = input.moveY;
   if (mx !== 0 && my !== 0) {
     mx *= Math.SQRT1_2;
     my *= Math.SQRT1_2;
   }
   f.x = clamp(f.x + mx * speed, ARENA.minX, ARENA.maxX);
   f.y = clamp(f.y + my * speed, ARENA.minY, ARENA.maxY);
-  f.moving = input.moveX !== 0 || input.moveY !== 0;
-  if (Math.abs(foe.x - f.x) > 4) f.facing = foe.x > f.x ? 1 : -1;
+  f.moving = mx !== 0 || my !== 0;
+  // Andando, olha para onde anda; parado, olha para o oponente.
+  if (f.moving) [f.lookX, f.lookY] = [mx / Math.hypot(mx, my), my / Math.hypot(mx, my)];
+  else [f.lookX, f.lookY] = dirTo(f.x, f.y, foe.x, foe.y, f.lookX, f.lookY);
 }
 
 function startAction(ctx: Ctx, f: Fighter, foe: Fighter, slot: Slot) {
@@ -307,8 +321,10 @@ function startAction(ctx: Ctx, f: Fighter, foe: Fighter, slot: Slot) {
   f.mp -= a.mpCost;
   f.cooldowns[slot] = Math.round(a.cooldown * FPS);
   if (slot === 'ultimate') f.gauge = 0;
-  if (Math.abs(foe.x - f.x) > 4) f.facing = foe.x > f.x ? 1 : -1;
-  f.action = { slot, frame: 0, hitsDone: 0 };
+  // Mira automática no oponente: o desafio é desviar, não apontar.
+  const [ax, ay] = dirTo(f.x, f.y, foe.x, foe.y, f.lookX, f.lookY);
+  [f.lookX, f.lookY] = [ax, ay];
+  f.action = { slot, frame: 0, hitsDone: 0, ax, ay };
   ctx.events.push({ type: 'cast', side: f.side, slot, name: a.name });
 
   if (a.kind === 'aoeTarget') {
@@ -337,8 +353,11 @@ function advanceAction(ctx: Ctx, f: Fighter, foe: Fighter) {
     case 'melee':
       while (act.hitsDone < hits && fr === hitFrame(act.hitsDone)) {
         act.hitsDone += 1;
-        const dx = (foe.x - f.x) * f.facing;
-        if (dx >= -12 && dx <= a.range && Math.abs(foe.y - f.y) <= a.depth) tryHit(ctx, f, foe, a, perHit, f.x);
+        const dx = foe.x - f.x;
+        const dy = foe.y - f.y;
+        const along = dx * act.ax + dy * act.ay;
+        const across = Math.abs(dx * act.ay - dy * act.ax);
+        if (along >= -12 && along <= a.range && across <= a.depth) tryHit(ctx, f, foe, a, perHit, f.x, f.y);
         if (!f.action) return;
       }
       break;
@@ -346,18 +365,19 @@ function advanceAction(ctx: Ctx, f: Fighter, foe: Fighter) {
       while (act.hitsDone < hits && fr === hitFrame(act.hitsDone)) {
         if (act.hitsDone === 0) ctx.events.push({ type: 'burst', x: f.x, y: f.y, radius: a.range, color: a.color });
         act.hitsDone += 1;
-        if (inFloorEllipse(foe.x, foe.y, f.x, f.y, a.range)) tryHit(ctx, f, foe, a, perHit, f.x);
+        if (inCircle(foe.x, foe.y, f.x, f.y, a.range)) tryHit(ctx, f, foe, a, perHit, f.x, f.y);
         if (!f.action) return;
       }
       break;
     case 'dash':
       if (fr >= a.startup && fr < a.startup + a.active) {
-        f.x = clamp(f.x + (f.facing * a.range) / a.active, ARENA.minX, ARENA.maxX);
+        f.x = clamp(f.x + (act.ax * a.range) / a.active, ARENA.minX, ARENA.maxX);
+        f.y = clamp(f.y + (act.ay * a.range) / a.active, ARENA.minY, ARENA.maxY);
         const expected = Math.min(hits, Math.floor(((fr - a.startup) * hits) / a.active) + 1);
-        const overlap = Math.abs(foe.x - f.x) <= RULES.dashHitX && Math.abs(foe.y - f.y) <= a.depth;
+        const overlap = inCircle(foe.x, foe.y, f.x, f.y, RULES.dashHitR);
         if (overlap && act.hitsDone < expected) {
           act.hitsDone = expected;
-          tryHit(ctx, f, foe, a, perHit, f.x - f.facing * 20);
+          tryHit(ctx, f, foe, a, perHit, f.x - act.ax * 20, f.y - act.ay * 20);
           if (!f.action) return;
         }
       }
@@ -369,9 +389,10 @@ function advanceAction(ctx: Ctx, f: Fighter, foe: Fighter) {
           owner: f.side,
           characterId: f.characterId,
           slot: act.slot,
-          x: f.x + f.facing * 24,
-          y: f.y,
-          vx: f.facing * (a.speed ?? 8),
+          x: f.x + act.ax * 24,
+          y: f.y + act.ay * 24,
+          vx: act.ax * (a.speed ?? 8),
+          vy: act.ay * (a.speed ?? 8),
           traveled: 0,
           reflected: false,
         });
@@ -428,7 +449,7 @@ export function computeDamage(attacker: Fighter, defender: Fighter, a: Ability, 
 }
 
 /** Resolve um golpe de `attacker` em `target`, considerando parry. */
-function tryHit(ctx: Ctx, attacker: Fighter, target: Fighter, a: Ability, power: number, fromX: number) {
+function tryHit(ctx: Ctx, attacker: Fighter, target: Fighter, a: Ability, power: number, fromX: number, fromY: number) {
   if (target.ko) return;
   let dmg = computeDamage(attacker, target, a, power, ctx.rand());
 
@@ -459,8 +480,9 @@ function tryHit(ctx: Ctx, attacker: Fighter, target: Fighter, a: Ability, power:
   if (!armored) {
     const kb = a.knockback ?? 6;
     stun(target, RULES.hitstunBase + kb);
-    const dir = target.x >= fromX ? 1 : -1;
-    target.x = clamp(target.x + dir * kb * 2, ARENA.minX, ARENA.maxX);
+    const [kx, ky] = dirTo(fromX, fromY, target.x, target.y, target.x >= fromX ? 1 : -1, 0);
+    target.x = clamp(target.x + kx * kb * 2, ARENA.minX, ARENA.maxX);
+    target.y = clamp(target.y + ky * kb * 2, ARENA.minY, ARENA.maxY);
   }
   for (const s of a.applyToTarget ?? []) addStatus(ctx, target, s.id, s.seconds);
 }
@@ -498,12 +520,14 @@ function updateProjectiles(ctx: Ctx) {
   w.projectiles = w.projectiles.filter((p) => {
     const a = ability(p, p.slot);
     p.x += p.vx;
-    p.traveled += Math.abs(p.vx);
-    if (p.traveled > a.range || p.x < ARENA.minX - 40 || p.x > ARENA.maxX + 40) return false;
+    p.y += p.vy;
+    p.traveled += Math.hypot(p.vx, p.vy);
+    const outside = p.x < ARENA.minX - 40 || p.x > ARENA.maxX + 40 || p.y < ARENA.minY - 40 || p.y > ARENA.maxY + 40;
+    if (p.traveled > a.range || outside) return false;
 
     const target = w.fighters[1 - p.owner];
     if (target.ko) return true;
-    if (Math.abs(target.x - p.x) > RULES.projectileHitX || Math.abs(target.y - p.y) > a.depth) return true;
+    if (!inCircle(target.x, target.y, p.x, p.y, Math.max(RULES.projectileHitR, a.depth))) return true;
 
     if (isParrying(target) && p.slot !== 'ultimate') {
       // Rebate: o projétil passa a ser de quem defendeu.
@@ -511,6 +535,7 @@ function updateProjectiles(ctx: Ctx) {
       ctx.events.push({ type: 'parry', side: target.side, result: 'reflect' });
       p.owner = target.side;
       p.vx = -p.vx;
+      p.vy = -p.vy;
       p.traveled = 0;
       p.reflected = true;
       return true;
@@ -519,7 +544,7 @@ function updateProjectiles(ctx: Ctx) {
     const hits = a.hits ?? 1;
     // Projétil rebatido usa os atributos de quem o criou, mas acerta o dono original.
     const source = p.reflected ? { ...shooter, characterId: p.characterId, statuses: [] } : shooter;
-    tryHit(ctx, source as Fighter, target, a, a.power / hits, p.x - p.vx);
+    tryHit(ctx, source as Fighter, target, a, a.power / hits, p.x - p.vx, p.y - p.vy);
     return false;
   });
 }
@@ -533,7 +558,7 @@ function updateZones(ctx: Ctx) {
     ctx.events.push({ type: 'burst', x: z.x, y: z.y, radius: a.range, color: a.color });
     const owner = w.fighters[z.owner];
     const target = w.fighters[1 - z.owner];
-    if (inFloorEllipse(target.x, target.y, z.x, z.y, a.range)) tryHit(ctx, owner, target, a, a.power, z.x);
+    if (inCircle(target.x, target.y, z.x, z.y, a.range)) tryHit(ctx, owner, target, a, a.power, z.x, z.y);
     return false;
   });
 }

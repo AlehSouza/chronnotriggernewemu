@@ -28,12 +28,23 @@ describe('simulação', () => {
     expect(w.fighters[1].hp).toBeLessThan(580);
   });
 
-  it('mudar de faixa (profundidade) desvia do golpe', () => {
-    const w = faceOff('crono', 'magus');
+  it('sair da linha do projétil desvia', () => {
+    const w = faceOff('lucca', 'robo', 300);
+    run(w, 1, { attack: true });
+    run(w, 60, {}, { moveY: 1 });
+    expect(w.fighters[1].hp).toBe(680);
+
+    const w2 = faceOff('lucca', 'robo', 300);
+    run(w2, 60, { attack: true });
+    expect(w2.fighters[1].hp).toBeLessThan(680);
+  });
+
+  it('a mira segue o oponente em qualquer direção', () => {
+    const w = faceOff('crono', 'magus', 0);
     w.fighters[1].y = w.fighters[0].y + 60;
     run(w, 1, { attack: true });
     run(w, 30);
-    expect(w.fighters[1].hp).toBe(580);
+    expect(w.fighters[1].hp).toBeLessThan(580);
   });
 
   it('parry devolve dano do ataque normal e atordoa o atacante', () => {
@@ -55,7 +66,7 @@ describe('simulação', () => {
       step(w, [NO_INPUT, press({ parry: near })]);
     }
     expect(w.fighters[1].hp).toBe(680);
-    expect(w.fighters[0].hp).toBeLessThan(560);
+    expect(w.fighters[0].hp).toBeLessThan(580);
   });
 
   it('área no alvo cai onde o alvo estava: sair de lá desvia', () => {

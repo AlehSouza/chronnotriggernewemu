@@ -5,7 +5,6 @@ import {
   ability,
   ARENA,
   createWorld,
-  FLOOR_SQUASH,
   FPS,
   isParrying,
   RULES,
@@ -22,9 +21,11 @@ import { animKey, facesLeft, standingTexture, type AnimName } from '../sprites';
 import type { ArenaData } from '../types';
 import { bar, button, COLORS, HEIGHT, panel, text, WIDTH } from '../ui';
 
-const FLOOR_Y0 = 300;
-const DEPTH_PX = 1.2;
-const BASE_SCALE = 3;
+/** Linha da tela onde fica y = 0 do chão. */
+const FLOOR_TOP = 112;
+/** Vista de cima em 3/4: o chão aparece um pouco achatado na vertical. */
+const VIEW_Y = 0.86;
+const BASE_SCALE = 2.6;
 const STEP_MS = 1000 / FPS;
 const BUFFER_FRAMES = 8;
 
@@ -208,52 +209,84 @@ export class ArenaScene extends Phaser.Scene {
 
   // ---------- cenário ----------
 
+  /** Pátio do castelo de Guardia visto de cima, em 3/4. */
   private drawStage() {
     const g = this.add.graphics().setDepth(-100);
-    g.fillGradientStyle(0x0b1030, 0x0b1030, 0x4a2a6a, 0x4a2a6a, 1);
-    g.fillRect(0, 0, WIDTH, FLOOR_Y0 - 20);
-    for (let i = 0; i < 60; i++) {
-      g.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.2, 0.8));
-      g.fillRect(Phaser.Math.Between(0, WIDTH), Phaser.Math.Between(0, 180), 2, 2);
-    }
-    g.fillStyle(0xf0e8c0, 0.9);
-    g.fillCircle(780, 150, 26);
-    // Silhueta do castelo de Guardia ao fundo.
-    g.fillStyle(0x1a1238, 1);
-    g.fillRect(260, 170, 440, 120);
-    for (const [x, w, h] of [[250, 50, 160], [420, 120, 200], [660, 50, 160], [340, 40, 140], [580, 40, 140]] as const) {
-      g.fillRect(x, 290 - h, w, h);
-      g.fillTriangle(x - 6, 290 - h, x + w / 2, 290 - h - 30, x + w + 6, 290 - h);
-    }
-    g.fillStyle(0x24184a, 1);
-    for (let i = 0; i < 9; i++) {
-      const x = i * 130 - 60;
-      g.fillTriangle(x, FLOOR_Y0 - 20, x + 80, FLOOR_Y0 - 90 - (i % 3) * 20, x + 160, FLOOR_Y0 - 20);
-    }
-    // Chão em perspectiva.
-    const top = FLOOR_Y0 - 20;
+    const left = ARENA.minX - 30;
+    const right = ARENA.maxX + 30;
+    const top = this.toScreen(0, ARENA.minY).sy - 50;
     const bottom = HEIGHT;
-    g.fillGradientStyle(0x3a2a20, 0x3a2a20, 0x6a5038, 0x6a5038, 1);
-    g.fillRect(0, top, WIDTH, bottom - top);
-    g.lineStyle(1, 0x2a1c14, 0.6);
-    for (let i = -10; i <= 10; i++) {
-      const xTop = WIDTH / 2 + i * 60;
-      const xBottom = WIDTH / 2 + i * 150;
-      g.lineBetween(xTop, top, xBottom, bottom);
+
+    g.fillStyle(0x0e0a1c, 1);
+    g.fillRect(0, 0, WIDTH, HEIGHT);
+
+    // Muro do fundo: topo + face frontal (é a face que dá a sensação de 3/4).
+    g.fillStyle(0x5a5068, 1);
+    g.fillRect(left - 20, top - 70, right - left + 40, 22);
+    g.fillStyle(0x3a3248, 1);
+    g.fillRect(left - 20, top - 48, right - left + 40, 48);
+    g.fillStyle(0x2a2436, 1);
+    for (let x = left - 20; x < right + 20; x += 32) g.fillRect(x, top - 48, 2, 48);
+    for (let x = left - 10; x < right + 20; x += 64) g.fillRect(x, top - 76, 24, 8);
+    // Estandartes vermelhos no muro.
+    for (const x of [WIDTH / 2 - 180, WIDTH / 2 + 160]) {
+      g.fillStyle(0x9a2a2a, 1);
+      g.fillRect(x, top - 44, 20, 36);
+      g.fillStyle(0xf0c040, 1);
+      g.fillRect(x + 7, top - 36, 6, 6);
     }
-    for (let k = 0; k < 7; k++) {
-      const t = (k / 6) ** 1.6;
-      const y = top + t * (bottom - top);
-      g.lineBetween(0, y, WIDTH, y);
+
+    // Piso de pedra em ladrilhos.
+    const tw = 40;
+    const th = Math.round(40 * VIEW_Y);
+    for (let y = top, row = 0; y < bottom; y += th, row++) {
+      for (let x = left, col = 0; x < right; x += tw, col++) {
+        g.fillStyle((row + col) % 2 ? 0x8a7f72 : 0x7e7366, 1);
+        g.fillRect(x, y, tw, th);
+        g.fillStyle(0x6a6056, 1);
+        g.fillRect(x, y + th - 2, tw, 2);
+        g.fillRect(x + tw - 2, y, 2, th);
+      }
+    }
+    // Tapete real no meio.
+    const cy = this.toScreen(0, (ARENA.minY + ARENA.maxY) / 2).sy;
+    g.fillStyle(0x8a1e2a, 1);
+    g.fillRect(left + 60, cy - 26, right - left - 120, 52);
+    g.fillStyle(0xd0a040, 1);
+    g.fillRect(left + 60, cy - 26, right - left - 120, 3);
+    g.fillRect(left + 60, cy + 23, right - left - 120, 3);
+
+    // Muros laterais (só a borda de cima aparece, vista de cima).
+    g.fillStyle(0x4a4058, 1);
+    g.fillRect(0, top - 70, left, bottom);
+    g.fillRect(right, top - 70, WIDTH - right, bottom);
+    g.fillStyle(0x5a5068, 1);
+    g.fillRect(left - 8, top - 70, 8, bottom);
+    g.fillRect(right, top - 70, 8, bottom);
+
+    // Pilares nos cantos: base no chão, sobem para cima da tela.
+    for (const [x, y] of [
+      [left + 6, top + 6],
+      [right - 30, top + 6],
+    ]) {
+      g.fillStyle(0x2a2436, 0.5);
+      g.fillEllipse(x + 12, y + 22, 34, 12);
+      g.fillStyle(0x9a90a8, 1);
+      g.fillRect(x, y - 70, 24, 90);
+      g.fillStyle(0xb8b0c4, 1);
+      g.fillRect(x - 3, y - 76, 30, 8);
+      g.fillStyle(0x6a6078, 1);
+      g.fillRect(x + 18, y - 70, 6, 90);
     }
   }
 
   private toScreen(x: number, y: number) {
-    return { sx: x, sy: FLOOR_Y0 + y * DEPTH_PX };
+    return { sx: x, sy: FLOOR_TOP + y * VIEW_Y };
   }
 
   private depthScale(y: number) {
-    return BASE_SCALE * (0.88 + 0.2 * (y / ARENA.maxY));
+    // Leve: quem está mais embaixo na tela parece um pouco mais perto.
+    return BASE_SCALE * (0.95 + 0.08 * (y / ARENA.maxY));
   }
 
   // ---------- personagens ----------
@@ -277,7 +310,11 @@ export class ArenaScene extends Phaser.Scene {
       if (a.kind === 'melee' || a.kind === 'dash' || f.action.slot === 'attack') return 'attack';
       return 'cast';
     }
-    return f.moving ? 'walk' : 'idle';
+    const base = f.moving ? 'walk' : 'idle';
+    // Olhando mais para cima/baixo do que para os lados: sprite de costas/frente.
+    if (f.lookY < -0.7) return `${base}_up`;
+    if (f.lookY > 0.7) return `${base}_down`;
+    return base;
   }
 
   private render() {
@@ -287,6 +324,7 @@ export class ArenaScene extends Phaser.Scene {
       const { sx, sy } = this.toScreen(f.x, f.y);
       const scale = this.depthScale(f.y);
       let drawX = sx;
+      let drawY = sy;
       let lift = 0;
 
       // Frog Squash: arco do salto até a área marcada.
@@ -297,15 +335,18 @@ export class ArenaScene extends Phaser.Scene {
         const zone = w.zones.find((z) => z.owner === f.side && z.slot === act.slot);
         if (zone && t < 1) {
           drawX = Phaser.Math.Linear(v.leapFrom.x, zone.x, t);
+          drawY = this.toScreen(0, Phaser.Math.Linear(v.leapFrom.y, zone.y, t)).sy;
           lift = Math.sin(t * Math.PI) * 160;
         }
       } else {
         v.leapFrom = null;
       }
 
-      v.sprite.setPosition(drawX, sy - lift).setScale(scale).setFlipX((f.facing === -1) !== facesLeft(this, f.characterId)).setDepth(sy);
-      v.shadow.setPosition(drawX, sy).setScale(scale / BASE_SCALE * (1 - lift / 400)).setDepth(sy - 1);
       const anim = this.animFor(f);
+      const sideView = !anim.endsWith('_up') && !anim.endsWith('_down');
+      const flip = sideView && (f.lookX < 0) !== facesLeft(this, f.characterId);
+      v.sprite.setPosition(drawX, drawY - lift).setScale(scale).setFlipX(flip).setDepth(drawY);
+      v.shadow.setPosition(drawX, drawY).setScale((scale / BASE_SCALE) * (1 - lift / 400)).setDepth(drawY - 1);
       if (anim !== v.anim) {
         v.anim = anim;
         v.sprite.play(animKey(f.characterId, anim));
@@ -318,7 +359,7 @@ export class ArenaScene extends Phaser.Scene {
         else v.sprite.clearTint();
       }
 
-      v.shield.setVisible(isParrying(f)).setPosition(drawX, sy - 40 * (scale / BASE_SCALE)).setDepth(sy + 1);
+      v.shield.setVisible(isParrying(f)).setPosition(drawX, drawY - 36 * (scale / BASE_SCALE)).setDepth(drawY + 1);
 
       // Área em volta carregando: anel que cresce (aviso para fugir).
       v.charge.clear();
@@ -327,9 +368,9 @@ export class ArenaScene extends Phaser.Scene {
         if (a.kind === 'aoeSelf' && act.frame < a.startup) {
           const t = act.frame / a.startup;
           v.charge.lineStyle(2, a.color, 0.4 + 0.5 * t);
-          v.charge.strokeEllipse(sx, sy, a.range * 2 * t, a.range * 2 * FLOOR_SQUASH * DEPTH_PX * t);
+          v.charge.strokeEllipse(sx, sy, a.range * 2 * t, a.range * 2 * VIEW_Y * t);
           v.charge.lineStyle(1, a.color, 0.35);
-          v.charge.strokeEllipse(sx, sy, a.range * 2, a.range * 2 * FLOOR_SQUASH * DEPTH_PX);
+          v.charge.strokeEllipse(sx, sy, a.range * 2, a.range * 2 * VIEW_Y);
           v.charge.setDepth(sy - 2);
         }
       }
@@ -346,7 +387,7 @@ export class ArenaScene extends Phaser.Scene {
         this.projectileViews.set(p.id, view);
       }
       const { sx, sy } = this.toScreen(p.x, p.y);
-      view.setPosition(sx, sy - 40).setDepth(sy);
+      view.setPosition(sx, sy - 34).setDepth(sy);
       if (p.reflected) view.setStrokeStyle(2, 0x8fe0ff, 1);
     }
     for (const [id, view] of this.projectileViews) {
@@ -369,7 +410,7 @@ export class ArenaScene extends Phaser.Scene {
       const { sx, sy } = this.toScreen(z.x, z.y);
       const t = 1 - z.framesLeft / z.total;
       const rx = a.range;
-      const ry = a.range * FLOOR_SQUASH * DEPTH_PX;
+      const ry = a.range * VIEW_Y;
       g.clear().setDepth(sy - 3);
       g.fillStyle(a.color, 0.12 + 0.25 * t);
       g.fillEllipse(sx, sy, rx * 2 * t, ry * 2 * t);
@@ -429,19 +470,19 @@ export class ArenaScene extends Phaser.Scene {
         case 'burst': {
           const { sx, sy } = this.toScreen(e.x, e.y);
           const ring = this.add
-            .ellipse(sx, sy, 20, 20 * FLOOR_SQUASH * DEPTH_PX, e.color, 0.5)
+            .ellipse(sx, sy, 20, 20 * VIEW_Y, e.color, 0.5)
             .setStrokeStyle(3, 0xffffff, 0.8)
             .setDepth(sy + 50);
           this.tweens.add({
             targets: ring,
             width: e.radius * 2,
-            height: e.radius * 2 * FLOOR_SQUASH * DEPTH_PX,
+            height: e.radius * 2 * VIEW_Y,
             alpha: 0,
             duration: 380,
             ease: 'Quad.out',
             onComplete: () => ring.destroy(),
           });
-          const pillar = this.add.rectangle(sx, sy, e.radius * 1.2, 220, e.color, 0.35).setOrigin(0.5, 1).setDepth(sy + 49);
+          const pillar = this.add.rectangle(sx, sy, Math.min(80, e.radius * 0.6), 160, e.color, 0.3).setOrigin(0.5, 1).setDepth(sy + 49);
           this.tweens.add({ targets: pillar, scaleX: 0.1, alpha: 0, duration: 420, onComplete: () => pillar.destroy() });
           break;
         }
@@ -468,12 +509,12 @@ export class ArenaScene extends Phaser.Scene {
     const f = this.world.fighters[side];
     const { sx, sy } = this.toScreen(f.x, f.y);
     for (let i = 0; i < 6; i++) {
-      const p = this.add.rectangle(sx, sy - 44, 5, 5, i % 2 ? 0xffffff : color).setDepth(sy + 2);
+      const p = this.add.rectangle(sx, sy - 38, 5, 5, i % 2 ? 0xffffff : color).setDepth(sy + 2);
       const ang = Phaser.Math.FloatBetween(0, Math.PI * 2);
       this.tweens.add({
         targets: p,
         x: sx + Math.cos(ang) * 40,
-        y: sy - 44 + Math.sin(ang) * 30,
+        y: sy - 38 + Math.sin(ang) * 30,
         alpha: 0,
         duration: 260,
         onComplete: () => p.destroy(),

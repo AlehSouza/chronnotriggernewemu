@@ -49,7 +49,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     stats: { maxHp: 570, maxMp: 90, atk: 17, mag: 22, def: 15, speed: 3.0 },
     palette: { hair: 0xf5d04a, skin: 0xf6d2ae, outfit: 0xf2f2f2, accent: 0x6fb7e8 },
     abilities: {
-      attack: { slot: 'attack', kind: 'projectile', name: 'Flecha', description: 'Dispara uma flecha em linha reta.', power: 18, scaling: 'atk', element: 'fisico', mpCost: 0, cooldown: 0, startup: 8, active: 1, recovery: 16, range: 520, depth: 18, speed: 9, knockback: 4, color: 0xe8e0c0 },
+      attack: { slot: 'attack', kind: 'projectile', name: 'Flecha', description: 'Dispara uma flecha em linha reta.', power: 15, scaling: 'atk', element: 'fisico', mpCost: 0, cooldown: 0, startup: 8, active: 1, recovery: 16, range: 520, depth: 18, speed: 9, knockback: 4, color: 0xe8e0c0 },
       parry: parry('Esquiva Real', 'agua'),
       skill: { slot: 'skill', kind: 'buff', name: 'Aura', description: 'Cura 18% do HP e regenera por 4s.', power: 0, scaling: 'mag', element: 'agua', mpCost: 25, cooldown: 6, startup: 14, active: 1, recovery: 14, range: 0, depth: 0, healPct: 0.18, applyToSelf: [{ id: 'regen', seconds: 4 }], color: 0x7affb0 },
       ultimate: { slot: 'ultimate', kind: 'aoeTarget', name: 'Ice 2', description: 'Marca o chão onde o alvo está e congela a área. Reduz a defesa.', power: 105, scaling: 'mag', element: 'agua', mpCost: 0, cooldown: 0, startup: 45, active: 1, recovery: 20, range: 95, depth: 0, knockback: 20, applyToTarget: [{ id: 'defDown', seconds: 5 }], color: 0x9ae0ff },
@@ -62,10 +62,10 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     era: '1000 d.C.',
     element: 'fogo',
     bio: 'Gênio da ciência. Frágil de perto, perigosa de longe.',
-    stats: { maxHp: 560, maxMp: 90, atk: 16, mag: 26, def: 15, speed: 2.8 },
+    stats: { maxHp: 580, maxMp: 90, atk: 16, mag: 26, def: 15, speed: 2.9 },
     palette: { hair: 0x7a4bb5, skin: 0xf2c79a, outfit: 0x3e8a4a, accent: 0xf0a030 },
     abilities: {
-      attack: { slot: 'attack', kind: 'projectile', name: 'Pistola Aérea', description: 'Tiro rápido em linha reta.', power: 15, scaling: 'atk', element: 'fisico', mpCost: 0, cooldown: 0, startup: 6, active: 1, recovery: 16, range: 560, depth: 16, speed: 11, knockback: 3, color: 0xffe080 },
+      attack: { slot: 'attack', kind: 'projectile', name: 'Pistola Aérea', description: 'Tiro rápido em linha reta.', power: 17, scaling: 'atk', element: 'fisico', mpCost: 0, cooldown: 0, startup: 6, active: 1, recovery: 16, range: 560, depth: 16, speed: 11, knockback: 3, color: 0xffe080 },
       parry: parry('Escudo Portátil', 'fogo'),
       skill: { slot: 'skill', kind: 'projectile', name: 'Napalm', description: 'Bomba lenta que queima por 4s.', power: 28, scaling: 'mag', element: 'fogo', mpCost: 20, cooldown: 3, startup: 12, active: 1, recovery: 18, range: 480, depth: 26, speed: 6, knockback: 10, applyToTarget: [{ id: 'burn', seconds: 4 }], color: 0xff7a2a },
       ultimate: { slot: 'ultimate', kind: 'aoeTarget', name: 'Flare', description: 'Chama gigante no lugar do alvo. Demora para cair: dá para escapar.', power: 125, scaling: 'mag', element: 'fogo', mpCost: 0, cooldown: 0, startup: 50, active: 1, recovery: 20, range: 115, depth: 0, knockback: 28, color: 0xff5a1a },
@@ -94,7 +94,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     era: '2300 d.C.',
     element: 'sombra',
     bio: 'Robô R-66Y. Lento, resistente, bate em sequência.',
-    stats: { maxHp: 680, maxMp: 50, atk: 21, mag: 14, def: 20, speed: 2.4 },
+    stats: { maxHp: 680, maxMp: 50, atk: 22, mag: 14, def: 22, speed: 2.8 },
     palette: { hair: 0xc9a227, skin: 0xd9b840, outfit: 0x8a7a50, accent: 0xe05050 },
     abilities: {
       attack: { slot: 'attack', kind: 'melee', name: 'Rocket Punch', description: 'Soco foguete de longo alcance.', power: 15, scaling: 'atk', element: 'fisico', mpCost: 0, cooldown: 0, startup: 8, active: 4, recovery: 16, range: 96, depth: 24, knockback: 10, color: 0xffd060 },
@@ -110,7 +110,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     era: '65.000.000 a.C.',
     element: 'fisico',
     bio: 'Guerreira pré-histórica. A mais rápida e a que bate mais forte de perto.',
-    stats: { maxHp: 590, maxMp: 50, atk: 23, mag: 10, def: 16, speed: 3.3 },
+    stats: { maxHp: 590, maxMp: 50, atk: 22, mag: 10, def: 16, speed: 3.2 },
     palette: { hair: 0xf0d050, skin: 0xe8b88a, outfit: 0xb08040, accent: 0x6a4a2a },
     abilities: {
       attack: { slot: 'attack', kind: 'melee', name: 'Soco', description: 'Soco curto e muito rápido.', power: 14, scaling: 'atk', element: 'fisico', mpCost: 0, cooldown: 0, startup: 4, active: 4, recovery: 12, range: 62, depth: 24, knockback: 5, color: 0xffffff },

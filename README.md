@@ -1,8 +1,8 @@
 # Chrono Duel
 
-Duelo 1x1 **em tempo real** numa arena 2.5D com os personagens jogáveis de Chrono Trigger
-(Crono, Marle, Lucca, Frog, Robo, Ayla e Magus). Você anda pelo cenário, desvia das habilidades e usa
-4 ações: **Ataque**, **Parry**, **Habilidade** e **Ultimate**.
+Duelo 1x1 **em tempo real** com os personagens jogáveis de Chrono Trigger (Crono, Marle, Lucca, Frog, Robo,
+Ayla e Magus), numa arena vista de cima em 3/4, como os mapas do jogo original. Você anda livre pelo
+cenário em 8 direções, desvia das habilidades e usa 4 ações: **Ataque**, **Parry**, **Habilidade** e **Ultimate**.
 
 ## Como rodar
 
@@ -24,8 +24,8 @@ npm run build:standalone  # página única em standalone/, sem Next.js (para tes
 | Habilidade | I | 9 ou Numpad 3 |
 | Ultimate | O | 0 ou Numpad 4 |
 
-W/S (ou ↑/↓) andam em **profundidade**: sair da faixa do oponente é o jeito de desviar de golpes e projéteis.
-Esc pausa.
+A mira é automática no oponente: o desafio é se mover. Sair da linha de um projétil ou de uma área marcada
+no chão é o jeito de desviar. Esc pausa.
 
 ## Regras
 
@@ -56,7 +56,8 @@ Hoje cada personagem é um boneco pixelado gerado por código. Para usar os spri
 
 1. Baixe os GIFs de cada personagem para `sprites-src/<id>/` (ex.: `sprites-src/crono/Crono - Victory.gif`).
 2. Rode `npm run sprites`. O script converte cada GIF animado numa spritesheet em `public/sprites/<id>/`,
-   escolhe a animação pelo nome do arquivo (parado, andar, ataque, magia, dano, defesa, nocaute, vitória) e gera
+   escolhe a animação pelo nome do arquivo (parado e andando de lado, de frente e de costas, ataque, magia, dano,
+   defesa, nocaute, vitória) e gera
    `src/game/sprites.generated.json`.
 3. Se o nome não bater, crie `sprites-src/<id>/map.json`, por exemplo
    `{ "idle": "Crono - Battle.gif", "facesLeft": true }`.

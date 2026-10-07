@@ -17,15 +17,21 @@ import sharp from 'sharp';
 
 const ROSTER = ['crono', 'marle', 'lucca', 'frog', 'robo', 'ayla', 'magus'];
 
+// Cada entrada é uma lista de alternativas; cada alternativa é um conjunto de palavras
+// que precisam aparecer todas no nome do arquivo. A primeira que bater ganha.
 const KEYWORDS = {
-  idle: ['battle stance', 'battle', 'stance', 'idle', 'stand'],
-  walk: ['walk', 'run'],
-  attack: ['attack', 'slash', 'swing', 'punch', 'shoot', 'strike'],
-  cast: ['cast', 'magic', 'spell', 'tech', 'raise'],
-  hurt: ['hurt', 'damage', 'hit', 'ouch'],
-  parry: ['block', 'guard', 'defend', 'parry'],
-  ko: ['dead', 'ko', 'down', 'faint'],
-  victory: ['victory', 'win', 'celebrate'],
+  idle: [['battle stance'], ['stand', 'left'], ['stand', 'right'], ['battle'], ['idle'], ['stand']],
+  idle_down: [['stand', 'down'], ['stand', 'front'], ['idle', 'down'], ['front']],
+  idle_up: [['stand', 'up'], ['stand', 'back'], ['idle', 'up'], ['back']],
+  walk: [['walk', 'left'], ['walk', 'right'], ['run', 'left'], ['run', 'right'], ['walk'], ['run']],
+  walk_down: [['walk', 'down'], ['walk', 'front'], ['run', 'down']],
+  walk_up: [['walk', 'up'], ['walk', 'back'], ['run', 'up']],
+  attack: [['attack'], ['slash'], ['swing'], ['punch'], ['shoot'], ['strike']],
+  cast: [['cast'], ['magic'], ['spell'], ['tech'], ['raise']],
+  hurt: [['hurt'], ['damage'], ['hit'], ['ouch']],
+  parry: [['block'], ['guard'], ['defend'], ['parry']],
+  ko: [['dead'], ['ko'], ['faint'], ['down', 'battle']],
+  victory: [['victory'], ['win'], ['celebrate']],
 };
 
 const SRC = 'sprites-src';
@@ -34,13 +40,9 @@ const MANIFEST = 'src/game/sprites.generated.json';
 
 function pick(files, anim) {
   const lower = files.map((f) => f.toLowerCase());
-  for (const word of KEYWORDS[anim]) {
-    // Prefere virado para a direita/esquerda explícito quando existir.
-    const hits = lower.map((f, i) => (f.includes(word) ? i : -1)).filter((i) => i >= 0);
-    if (hits.length) {
-      const right = hits.find((i) => lower[i].includes('right'));
-      return files[right ?? hits[0]];
-    }
+  for (const words of KEYWORDS[anim]) {
+    const i = lower.findIndex((f) => words.every((w) => f.includes(w)));
+    if (i >= 0) return files[i];
   }
   return null;
 }
