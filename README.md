@@ -23,9 +23,11 @@ npm run build:standalone  # página única em standalone/, sem Next.js (para tes
 | Parry | U | 8 ou Numpad 2 |
 | Habilidade | I | 9 ou Numpad 3 |
 | Ultimate | O | 0 ou Numpad 4 |
+| Dash | Espaço | Enter ou Numpad 0 |
 
 A mira é automática no oponente: o desafio é se mover. Sair da linha de um projétil ou de uma área marcada
-no chão é o jeito de desviar. Esc pausa.
+no chão é o jeito de desviar. O **dash** vai na direção que você está segurando (sem direção, recua), fica
+invulnerável no começo, então dá para atravessar golpes, e tem recarga de 0,8s. Esc pausa.
 
 ## Regras
 

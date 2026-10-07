@@ -72,7 +72,7 @@ export class SkillsScene extends Phaser.Scene {
     add(text(this, x + 140, y + 62, c.bio, 8, COLORS.text, { wordWrap: { width: 550 } }));
     const s = c.stats;
     add(text(this, x + 140, y + 104, `HP ${s.maxHp}  MP ${s.maxMp}  ATQ ${s.atk}  MAG ${s.mag}  DEF ${s.def}  VEL ${s.speed}`, 8, COLORS.text));
-    add(text(this, x + 140, y + 124, 'Mover: WASD (W/S anda em profundidade, use para desviar)', 7, COLORS.muted));
+    add(text(this, x + 140, y + 124, 'Mover: WASD · Dash: Espaço (atravessa golpes no começo)', 7, COLORS.muted));
 
     SLOT_ORDER.forEach((slot, k) => {
       const a = c.abilities[slot];

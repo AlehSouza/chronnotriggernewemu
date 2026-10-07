@@ -23,6 +23,13 @@ export const RULES = {
   gaugePerDamageDealt: 0.35,
   gaugePerDamageTaken: 0.5,
   gaugeOnParry: 20,
+  /** Multiplica a velocidade de andar de todos os personagens. */
+  moveSpeedScale: 1.2,
+  dashFrames: 10,
+  dashSpeed: 9,
+  /** Quadros do começo do dash em que nada acerta (dá para atravessar golpes). */
+  dashInvulnFrames: 8,
+  dashCooldown: 48,
   mpPerSecond: 4,
   parryReflect: 0.6,
   parryUltimateBlock: 0.5,
@@ -51,9 +58,18 @@ export interface Input {
   parry: boolean;
   skill: boolean;
   ultimate: boolean;
+  dash: boolean;
 }
 
-export const NO_INPUT: Input = { moveX: 0, moveY: 0, attack: false, parry: false, skill: false, ultimate: false };
+export const NO_INPUT: Input = {
+  moveX: 0,
+  moveY: 0,
+  attack: false,
+  parry: false,
+  skill: false,
+  ultimate: false,
+  dash: false,
+};
 
 export interface ActionState {
   slot: Slot;
@@ -85,6 +101,11 @@ export interface Fighter {
   cooldowns: Record<Slot, number>;
   statuses: StatusInstance[];
   moving: boolean;
+  /** Quadros restantes do dash (0 = não está dando dash). */
+  dashFrames: number;
+  dashX: number;
+  dashY: number;
+  dashCooldown: number;
   ko: boolean;
 }
 
@@ -127,6 +148,7 @@ export type ParryResult = 'reflect' | 'block' | 'partial';
 
 export type SimEvent =
   | { type: 'cast'; side: Side; slot: Slot; name: string }
+  | { type: 'dash'; side: Side }
   | { type: 'hit'; target: Side; amount: number; crit: boolean; source: 'hit' | 'reflect' | 'burn'; color: number }
   | { type: 'parry'; side: Side; result: ParryResult }
   | { type: 'heal'; target: Side; amount: number }
@@ -169,6 +191,10 @@ function createFighter(side: Side, id: CharacterId): Fighter {
     cooldowns: { attack: 0, parry: 0, skill: 0, ultimate: 0 },
     statuses: [],
     moving: false,
+    dashFrames: 0,
+    dashX: 0,
+    dashY: 0,
+    dashCooldown: 0,
     ko: false,
   };
 }
@@ -242,12 +268,24 @@ export function step(w: World, inputs: [Input, Input]): SimEvent[] {
     const foe = w.fighters[1 - side];
     if (f.ko) continue;
     f.moving = false;
-    if (f.hitstun > 0) continue;
+    if (f.hitstun > 0) {
+      f.dashFrames = 0;
+      continue;
+    }
     if (f.action) {
       advanceAction(ctx, f, foe);
       continue;
     }
+    if (f.dashFrames > 0) {
+      dashStep(f);
+      continue;
+    }
     const input = inputs[side];
+    if (input.dash && f.dashCooldown === 0) {
+      startDash(ctx, f, input);
+      dashStep(f);
+      continue;
+    }
     const wanted: Slot | null = input.ultimate
       ? 'ultimate'
       : input.skill
@@ -282,6 +320,7 @@ function tickTimers(ctx: Ctx, f: Fighter) {
   const { stats } = CHARACTERS[f.characterId];
   for (const slot of Object.keys(f.cooldowns) as Slot[]) f.cooldowns[slot] = Math.max(0, f.cooldowns[slot] - 1);
   f.hitstun = Math.max(0, f.hitstun - 1);
+  f.dashCooldown = Math.max(0, f.dashCooldown - 1);
   f.mp = Math.min(stats.maxMp, f.mp + RULES.mpPerSecond / FPS);
   f.gauge = Math.min(RULES.gaugeMax, f.gauge + RULES.gaugePerSecond / FPS);
 
@@ -301,7 +340,7 @@ function tickTimers(ctx: Ctx, f: Fighter) {
 }
 
 function move(f: Fighter, foe: Fighter, input: Input) {
-  const { speed } = CHARACTERS[f.characterId].stats;
+  const speed = CHARACTERS[f.characterId].stats.speed * RULES.moveSpeedScale;
   let mx: number = input.moveX;
   let my: number = input.moveY;
   if (mx !== 0 && my !== 0) {
@@ -449,8 +488,35 @@ export function computeDamage(attacker: Fighter, defender: Fighter, a: Ability, 
 }
 
 /** Resolve um golpe de `attacker` em `target`, considerando parry. */
+export function isDashInvulnerable(f: Fighter): boolean {
+  return f.dashFrames > RULES.dashFrames - RULES.dashInvulnFrames;
+}
+
+/** Dash: na direção que está segurando; sem direção, recua (para longe do oponente). */
+function startDash(ctx: Ctx, f: Fighter, input: Input) {
+  let dx: number = input.moveX;
+  let dy: number = input.moveY;
+  if (dx === 0 && dy === 0) {
+    dx = -f.lookX;
+    dy = -f.lookY;
+  }
+  const len = Math.hypot(dx, dy) || 1;
+  f.dashX = dx / len;
+  f.dashY = dy / len;
+  f.dashFrames = RULES.dashFrames;
+  f.dashCooldown = RULES.dashCooldown;
+  ctx.events.push({ type: 'dash', side: f.side });
+}
+
+function dashStep(f: Fighter) {
+  f.x = clamp(f.x + f.dashX * RULES.dashSpeed, ARENA.minX, ARENA.maxX);
+  f.y = clamp(f.y + f.dashY * RULES.dashSpeed, ARENA.minY, ARENA.maxY);
+  f.dashFrames -= 1;
+  f.moving = true;
+}
+
 function tryHit(ctx: Ctx, attacker: Fighter, target: Fighter, a: Ability, power: number, fromX: number, fromY: number) {
-  if (target.ko) return;
+  if (target.ko || isDashInvulnerable(target)) return;
   let dmg = computeDamage(attacker, target, a, power, ctx.rand());
 
   if (isParrying(target)) {
@@ -526,7 +592,7 @@ function updateProjectiles(ctx: Ctx) {
     if (p.traveled > a.range || outside) return false;
 
     const target = w.fighters[1 - p.owner];
-    if (target.ko) return true;
+    if (target.ko || isDashInvulnerable(target)) return true;
     if (!inCircle(target.x, target.y, p.x, p.y, Math.max(RULES.projectileHitR, a.depth))) return true;
 
     if (isParrying(target) && p.slot !== 'ultimate') {

@@ -6,6 +6,7 @@ import {
   ARENA,
   createWorld,
   FPS,
+  isDashInvulnerable,
   isParrying,
   RULES,
   slotBlockReason,
@@ -38,7 +39,9 @@ interface KeyMap {
   left: string[];
   right: string[];
   slots: Record<Slot, string[]>;
+  dash: string[];
   labels: string;
+  dashLabel: string;
 }
 
 const P1_KEYS: KeyMap = {
@@ -47,7 +50,9 @@ const P1_KEYS: KeyMap = {
   left: ['A'],
   right: ['D'],
   slots: { attack: ['Y'], parry: ['U'], skill: ['I'], ultimate: ['O'] },
+  dash: ['SPACE'],
   labels: 'YUIO',
+  dashLabel: 'ESP',
 };
 
 const P2_KEYS: KeyMap = {
@@ -61,13 +66,15 @@ const P2_KEYS: KeyMap = {
     skill: ['NUMPAD_THREE', 'NINE'],
     ultimate: ['NUMPAD_FOUR', 'ZERO'],
   },
+  dash: ['ENTER', 'NUMPAD_ZERO'],
   labels: '7890',
+  dashLabel: 'ENT',
 };
 
 /** Lê teclado de um jogador e guarda os apertos por alguns quadros (buffer). */
 class KeyboardPlayer {
   private dirs: Record<'up' | 'down' | 'left' | 'right', Phaser.Input.Keyboard.Key[]>;
-  private pressedAt: Partial<Record<Slot, number>> = {};
+  private pressedAt: Partial<Record<Slot | 'dash', number>> = {};
   private slotKeys: Phaser.Input.Keyboard.Key[] = [];
 
   constructor(
@@ -78,8 +85,9 @@ class KeyboardPlayer {
     const kb = scene.input.keyboard!;
     const keys = (names: string[]) => names.map((n) => kb.addKey(n, true));
     this.dirs = { up: keys(map.up), down: keys(map.down), left: keys(map.left), right: keys(map.right) };
-    for (const slot of SLOT_ORDER) {
-      for (const k of keys(map.slots[slot])) {
+    const buttons: Array<[Slot | 'dash', string[]]> = [...SLOT_ORDER.map((s) => [s, map.slots[s]] as [Slot, string[]]), ['dash', map.dash]];
+    for (const [slot, names] of buttons) {
+      for (const k of keys(names)) {
         k.on('down', () => (this.pressedAt[slot] = this.clock()));
         this.slotKeys.push(k);
       }
@@ -90,7 +98,7 @@ class KeyboardPlayer {
   input(): Input {
     const held = (ks: Phaser.Input.Keyboard.Key[]) => ks.some((k) => k.isDown);
     const now = this.clock();
-    const fresh = (s: Slot) => this.pressedAt[s] !== undefined && now - this.pressedAt[s]! <= BUFFER_FRAMES;
+    const fresh = (s: Slot | 'dash') => this.pressedAt[s] !== undefined && now - this.pressedAt[s]! <= BUFFER_FRAMES;
     return {
       moveX: held(this.dirs.left) ? -1 : held(this.dirs.right) ? 1 : 0,
       moveY: held(this.dirs.up) ? -1 : held(this.dirs.down) ? 1 : 0,
@@ -98,6 +106,7 @@ class KeyboardPlayer {
       parry: fresh('parry'),
       skill: fresh('skill'),
       ultimate: fresh('ultimate'),
+      dash: fresh('dash'),
     };
   }
 
@@ -165,8 +174,8 @@ export class ArenaScene extends Phaser.Scene {
 
     for (const f of this.world.fighters) this.views.push(this.makeFighterView(f));
     this.huds = [this.makeHud(0), this.makeHud(1)];
-    this.makeSlotBar(0, P1_KEYS.labels);
-    this.makeSlotBar(1, this.cfg.mode === 'local' ? P2_KEYS.labels : '');
+    this.makeSlotBar(0, P1_KEYS.labels, P1_KEYS.dashLabel);
+    this.makeSlotBar(1, this.cfg.mode === 'local' ? P2_KEYS.labels : '', this.cfg.mode === 'local' ? P2_KEYS.dashLabel : '');
     this.timerText = text(this, WIDTH / 2, 30, '99', 22, COLORS.gold).setOrigin(0.5).setStroke('#000', 6).setDepth(1000);
 
     this.input.keyboard!.on('keydown-ESC', () => this.togglePause());
@@ -186,7 +195,7 @@ export class ArenaScene extends Phaser.Scene {
         const inputs = this.controllers.map((c) => c.input(this.world)) as [Input, Input];
         const events = step(this.world, inputs);
         for (const e of events) {
-          if (e.type === 'cast') this.controllers[e.side].consume?.();
+          if (e.type === 'cast' || e.type === 'dash') this.controllers[e.side].consume?.();
         }
         this.handleEvents(events);
         if (this.world.winner !== null) {
@@ -359,6 +368,7 @@ export class ArenaScene extends Phaser.Scene {
         else v.sprite.clearTint();
       }
 
+      v.sprite.setAlpha(isDashInvulnerable(f) ? 0.55 : 1);
       v.shield.setVisible(isParrying(f)).setPosition(drawX, drawY - 36 * (scale / BASE_SCALE)).setDepth(drawY + 1);
 
       // Área em volta carregando: anel que cresce (aviso para fugir).
@@ -433,6 +443,9 @@ export class ArenaScene extends Phaser.Scene {
   private handleEvents(events: SimEvent[]) {
     for (const e of events) {
       switch (e.type) {
+        case 'dash':
+          this.dashGhosts(e.side);
+          break;
         case 'cast': {
           const f = this.world.fighters[e.side];
           const a = ability(f, e.slot);
@@ -492,6 +505,24 @@ export class ArenaScene extends Phaser.Scene {
         case 'end':
           break;
       }
+    }
+  }
+
+  /** Rastro de "fantasmas" atrás de quem deu dash. */
+  private dashGhosts(side: Side) {
+    const v = this.views[side];
+    for (let i = 0; i < 4; i++) {
+      this.time.delayedCall(i * 35, () => {
+        const ghost = this.add
+          .sprite(v.sprite.x, v.sprite.y, v.sprite.texture.key, v.sprite.frame.name)
+          .setOrigin(0.5, 1)
+          .setScale(v.sprite.scaleX)
+          .setFlipX(v.sprite.flipX)
+          .setTintFill(0x8fe0ff)
+          .setAlpha(0.5)
+          .setDepth(v.sprite.depth - 1);
+        this.tweens.add({ targets: ghost, alpha: 0, duration: 220, onComplete: () => ghost.destroy() });
+      });
     }
   }
 
@@ -562,11 +593,12 @@ export class ArenaScene extends Phaser.Scene {
     };
   }
 
-  private makeSlotBar(side: Side, keys: string) {
+  private makeSlotBar(side: Side, keys: string, dashLabel: string) {
     const f = this.world.fighters[side];
     const size = 40;
     const gap = 6;
-    const total = 4 * size + 3 * gap;
+    const dashW = 52;
+    const total = 4 * size + 4 * gap + dashW;
     const x0 = side === 0 ? 14 : WIDTH - 14 - total;
     const y = HEIGHT - size - 10;
     const boxes = SLOT_ORDER.map((slot, i) => {
@@ -578,8 +610,15 @@ export class ArenaScene extends Phaser.Scene {
       const key = text(this, x + 3, y + 3, keys[i] ?? '', 8, COLORS.text).setDepth(952);
       return { slot, bg, fill, key };
     });
+    const dx = x0 + 4 * (size + gap);
+    const dashBg = this.add.rectangle(dx, y, dashW, size, 0x141c4a, 0.9).setOrigin(0).setStrokeStyle(2, 0x8fa8ff).setDepth(950);
+    const dashFill = this.add.rectangle(dx, y + size, dashW, 0, 0x000000, 0.6).setOrigin(0, 1).setDepth(951);
+    text(this, dx + 3, y + 3, dashLabel, 7, COLORS.text).setDepth(952);
+    text(this, dx + dashW / 2, y + 26, 'DASH', 7, '#8fe0ff').setOrigin(0.5).setDepth(952);
     const update = () => {
       const fr = this.world.fighters[side];
+      dashFill.height = size * (fr.dashCooldown / RULES.dashCooldown);
+      dashBg.setStrokeStyle(2, fr.dashCooldown > 0 ? 0x5a6ab8 : 0x8fa8ff);
       for (const b of boxes) {
         const a = ability(fr, b.slot);
         const reason = slotBlockReason(fr, b.slot);
@@ -657,7 +696,6 @@ export class ArenaScene extends Phaser.Scene {
       kb.on('keydown-DOWN', down);
       kb.on('keydown-S', down);
       kb.on('keydown-ENTER', () => options[idx].action());
-      kb.on('keydown-SPACE', () => options[idx].action());
     });
   }
 }

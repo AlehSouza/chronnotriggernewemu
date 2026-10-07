@@ -71,7 +71,12 @@ export class CpuController {
     let vy = me.y - y;
     if (Math.hypot(vx, vy) < 1) vx = 1;
     [vx, vy] = avoidWalls(me, vx / Math.hypot(vx, vy), vy / Math.hypot(vx, vy));
-    return { ...NO_INPUT, ...toKeys(vx, vy) };
+    return { ...NO_INPUT, ...toKeys(vx, vy), dash: this.wantsDash(me) };
+  }
+
+  /** Às vezes usa o dash para escapar mais rápido. */
+  private wantsDash(me: Fighter): boolean {
+    return me.dashCooldown === 0 && this.rand() < 0.08;
   }
 
   private dodge(w: World, me: Fighter, foe: Fighter): Input | null {
@@ -113,7 +118,7 @@ export class CpuController {
       // Anda perpendicular ao tiro, para o lado em que já está.
       const s = side >= 0 ? 1 : -1;
       const [vx, vy] = avoidWalls(me, uy * s, -ux * s);
-      return { ...NO_INPUT, ...toKeys(vx, vy) };
+      return { ...NO_INPUT, ...toKeys(vx, vy), dash: ahead < 110 && this.wantsDash(me) };
     }
     return null;
   }

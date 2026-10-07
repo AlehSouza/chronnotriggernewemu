@@ -25,7 +25,7 @@ describe('simulação', () => {
     const w = faceOff('crono', 'magus');
     run(w, 1, { attack: true });
     run(w, 30);
-    expect(w.fighters[1].hp).toBeLessThan(580);
+    expect(w.fighters[1].hp).toBeLessThan(630);
   });
 
   it('sair da linha do projétil desvia', () => {
@@ -44,14 +44,35 @@ describe('simulação', () => {
     w.fighters[1].y = w.fighters[0].y + 60;
     run(w, 1, { attack: true });
     run(w, 30);
-    expect(w.fighters[1].hp).toBeLessThan(580);
+    expect(w.fighters[1].hp).toBeLessThan(630);
+  });
+
+  it('dash atravessa projétil sem tomar dano', () => {
+    const w = faceOff('lucca', 'robo', 300);
+    run(w, 1, { attack: true });
+    for (let i = 0; i < 60; i++) {
+      const p = w.projectiles[0];
+      const near = !!p && Math.abs(p.x - w.fighters[1].x) < 30;
+      step(w, [NO_INPUT, press({ dash: near, moveX: near ? -1 : 0 })]);
+    }
+    expect(w.fighters[1].hp).toBe(680);
+  });
+
+  it('dash tem recarga', () => {
+    const w = faceOff('ayla', 'magus', 300);
+    run(w, 1, {}, {});
+    const x0 = w.fighters[0].x;
+    run(w, 12, { dash: true, moveX: -1 });
+    const dashed = x0 - w.fighters[0].x;
+    expect(dashed).toBeGreaterThan(80);
+    expect(w.fighters[0].dashCooldown).toBeGreaterThan(0);
   });
 
   it('parry devolve dano do ataque normal e atordoa o atacante', () => {
     const w = faceOff('crono', 'frog');
     run(w, 1, { attack: true }, { parry: true });
     const events = run(w, 30);
-    expect(w.fighters[1].hp).toBe(610);
+    expect(w.fighters[1].hp).toBe(640);
     expect(w.fighters[0].hp).toBeLessThan(630);
     expect(events).toContainEqual({ type: 'parry', side: 1, result: 'reflect' });
   });
