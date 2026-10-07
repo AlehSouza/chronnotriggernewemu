@@ -7,3 +7,4 @@ sprites-src
 *.log
 .DS_Store
 *.tsbuildinfo
+dist
