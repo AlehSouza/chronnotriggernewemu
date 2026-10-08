@@ -49,9 +49,9 @@ const P1_KEYS: KeyMap = {
   down: ['S'],
   left: ['A'],
   right: ['D'],
-  slots: { attack: ['Y'], parry: ['U'], skill: ['I'], ultimate: ['O'] },
+  slots: { attack: ['U'], parry: ['I'], skill: ['J'], ultimate: ['K'] },
   dash: ['SPACE'],
-  labels: 'YUIO',
+  labels: 'UIJK',
   dashLabel: 'ESP',
 };
 

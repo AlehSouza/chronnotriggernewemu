@@ -4,6 +4,7 @@ import type { CharacterId } from '../../shared/types';
 import { animKey, facesLeft, portraitKey, spriteScale, standingTexture } from '../sprites';
 import type { ArenaData, SelectData } from '../types';
 import { bar, COLORS, fit, HEIGHT, panel, text, timeBackground, WIDTH } from '../ui';
+import { P1_KEYS } from './SkillsScene';
 
 const CELL = 84;
 const GAP = 10;
@@ -47,7 +48,10 @@ export class SelectScene extends Phaser.Scene {
       const x = startX + i * (CELL + GAP);
       panel(this, x - CELL / 2, GRID_Y - CELL / 2, CELL, CELL);
       const img = fit(this.add.image(x, GRID_Y, portraitKey(id)), CELL - 8, CELL - 8);
-      img.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.pointerPick(i));
+      img
+        .setInteractive({ useHandCursor: true })
+        .on('pointerover', () => this.pointerHover(i))
+        .on('pointerdown', () => this.pointerPick(i));
     });
 
     const p1Index = 0;
@@ -112,7 +116,7 @@ export class SelectScene extends Phaser.Scene {
         name.setText(c.name.toUpperCase());
         title.setText(`${c.title} · ${c.era}`);
         info.setText(
-          `${ELEMENT_LABEL[c.element]}\n\n` + SLOT_ORDER.map((a, i) => `${'YUIO'[i]} ${SLOT_LABEL[a]}:\n  ${c.abilities[a].name}`).join('\n'),
+          `${ELEMENT_LABEL[c.element]}\n\n` + SLOT_ORDER.map((a, i) => `${P1_KEYS[i]} ${SLOT_LABEL[a]}:\n  ${c.abilities[a].name}`).join('\n'),
         );
         hpBar(c.stats.maxHp / 420);
         atkBar(c.stats.atk / 28);
@@ -152,8 +156,23 @@ export class SelectScene extends Phaser.Scene {
     this.refresh(1 - p);
   }
 
+  /** Quem o mouse controla: o primeiro jogador humano que ainda não confirmou. */
+  private pointerPlayer(): number {
+    if (this.starting) return -1;
+    return this.players.findIndex((pl, i) => !pl.locked && !(i === 1 && this.mode === 'cpu'));
+  }
+
+  /** Passar o mouse num retrato mostra o personagem no painel, sem confirmar. */
+  private pointerHover(index: number) {
+    const p = this.pointerPlayer();
+    if (p < 0 || this.players[p].index === index) return;
+    this.players[p].index = index;
+    this.refresh(p);
+    this.refresh(1 - p);
+  }
+
   private pointerPick(index: number) {
-    const p = this.players.findIndex((pl, i) => !pl.locked && !(i === 1 && this.mode === 'cpu'));
+    const p = this.pointerPlayer();
     if (p < 0) return;
     this.players[p].index = index;
     this.refresh(p);

@@ -5,7 +5,7 @@ import { animKey, spriteScale, standingTexture } from '../sprites';
 import { button, COLORS, HEIGHT, panel, text, timeBackground, WIDTH, type Button } from '../ui';
 
 const SLOT_COLOR = { attack: '#ffffff', parry: '#8fe0ff', skill: '#c08aff', ultimate: '#f5d04a' } as const;
-export const P1_KEYS = 'YUIO';
+export const P1_KEYS = 'UIJK';
 
 export function abilityInfoLine(a: Ability): string {
   const parts: string[] = [KIND_LABEL[a.kind]];

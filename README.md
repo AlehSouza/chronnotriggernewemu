@@ -19,10 +19,10 @@ npm run build:standalone  # página única em standalone/, sem Next.js (para tes
 | | Jogador 1 | Jogador 2 (mesmo teclado) |
 | --- | --- | --- |
 | Mover | W A S D | Setas |
-| Ataque | Y | 7 ou Numpad 1 |
-| Parry | U | 8 ou Numpad 2 |
-| Habilidade | I | 9 ou Numpad 3 |
-| Ultimate | O | 0 ou Numpad 4 |
+| Ataque | U | 7 ou Numpad 1 |
+| Parry | I | 8 ou Numpad 2 |
+| Habilidade | J | 9 ou Numpad 3 |
+| Ultimate | K | 0 ou Numpad 4 |
 | Dash | Espaço | Enter ou Numpad 0 |
 
 A mira é automática no oponente: o desafio é se mover. Sair da linha de um projétil ou de uma área marcada

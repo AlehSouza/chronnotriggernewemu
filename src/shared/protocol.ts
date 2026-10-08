@@ -2,7 +2,7 @@
 // mas fica aqui para cliente e servidor compartilharem os mesmos tipos.
 //
 // Modelo: o servidor roda `step()` a 60 quadros/s como autoridade. Os clientes mandam
-// só as entradas (WASD + YUIO) e recebem o mundo periodicamente para desenhar,
+// só as entradas (WASD + UIJK) e recebem o mundo periodicamente para desenhar,
 // com predição local do próprio personagem.
 
 import type { Input, Side, SimEvent, World } from './sim';
