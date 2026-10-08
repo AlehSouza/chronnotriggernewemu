@@ -1,1 +1,639 @@
-{}
+{
+  "crono": {
+    "facesLeft": true,
+    "scale": 0.5,
+    "anims": {
+      "idle": {
+        "file": "sprites/crono/idle.png",
+        "frameWidth": 80,
+        "frameHeight": 62,
+        "frames": 4,
+        "fps": 6
+      },
+      "idle_down": {
+        "file": "sprites/crono/idle_down.png",
+        "frameWidth": 48,
+        "frameHeight": 64,
+        "frames": 4,
+        "fps": 6
+      },
+      "idle_up": {
+        "file": "sprites/crono/idle_up.png",
+        "frameWidth": 38,
+        "frameHeight": 60,
+        "frames": 4,
+        "fps": 6
+      },
+      "walk": {
+        "file": "sprites/crono/walk.png",
+        "frameWidth": 50,
+        "frameHeight": 68,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_down": {
+        "file": "sprites/crono/walk_down.png",
+        "frameWidth": 42,
+        "frameHeight": 70,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_up": {
+        "file": "sprites/crono/walk_up.png",
+        "frameWidth": 42,
+        "frameHeight": 66,
+        "frames": 6,
+        "fps": 6
+      },
+      "attack": {
+        "file": "sprites/crono/attack.png",
+        "frameWidth": 70,
+        "frameHeight": 64,
+        "frames": 3,
+        "fps": 10
+      },
+      "cast": {
+        "file": "sprites/crono/cast.png",
+        "frameWidth": 44,
+        "frameHeight": 78,
+        "frames": 2,
+        "fps": 6
+      },
+      "hurt": {
+        "file": "sprites/crono/hurt.png",
+        "frameWidth": 40,
+        "frameHeight": 60,
+        "frames": 1,
+        "fps": 5
+      },
+      "parry": {
+        "file": "sprites/crono/parry.png",
+        "frameWidth": 54,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "ko": {
+        "file": "sprites/crono/ko.png",
+        "frameWidth": 66,
+        "frameHeight": 28,
+        "frames": 1,
+        "fps": 5
+      },
+      "victory": {
+        "file": "sprites/crono/victory.png",
+        "frameWidth": 40,
+        "frameHeight": 70,
+        "frames": 2,
+        "fps": 4
+      }
+    },
+    "portrait": "sprites/crono/portrait.png"
+  },
+  "marle": {
+    "facesLeft": true,
+    "scale": 0.5,
+    "anims": {
+      "idle": {
+        "file": "sprites/marle/idle.png",
+        "frameWidth": 42,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "idle_down": {
+        "file": "sprites/marle/idle_down.png",
+        "frameWidth": 28,
+        "frameHeight": 66,
+        "frames": 1,
+        "fps": 5
+      },
+      "idle_up": {
+        "file": "sprites/marle/idle_up.png",
+        "frameWidth": 26,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "walk": {
+        "file": "sprites/marle/walk.png",
+        "frameWidth": 42,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "walk_down": {
+        "file": "sprites/marle/walk_down.png",
+        "frameWidth": 36,
+        "frameHeight": 70,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_up": {
+        "file": "sprites/marle/walk_up.png",
+        "frameWidth": 34,
+        "frameHeight": 66,
+        "frames": 6,
+        "fps": 6
+      },
+      "attack": {
+        "file": "sprites/marle/attack.png",
+        "frameWidth": 78,
+        "frameHeight": 64,
+        "frames": 4,
+        "fps": 12
+      },
+      "cast": {
+        "file": "sprites/marle/cast.png",
+        "frameWidth": 42,
+        "frameHeight": 92,
+        "frames": 2,
+        "fps": 8
+      },
+      "hurt": {
+        "file": "sprites/marle/hurt.png",
+        "frameWidth": 44,
+        "frameHeight": 62,
+        "frames": 1,
+        "fps": 5
+      },
+      "parry": {
+        "file": "sprites/marle/parry.png",
+        "frameWidth": 52,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 7
+      },
+      "ko": {
+        "file": "sprites/marle/ko.png",
+        "frameWidth": 96,
+        "frameHeight": 28,
+        "frames": 1,
+        "fps": 5
+      },
+      "victory": {
+        "file": "sprites/marle/victory.png",
+        "frameWidth": 48,
+        "frameHeight": 88,
+        "frames": 1,
+        "fps": 7
+      }
+    },
+    "portrait": "sprites/marle/portrait.png"
+  },
+  "lucca": {
+    "facesLeft": true,
+    "scale": 0.5,
+    "anims": {
+      "idle": {
+        "file": "sprites/lucca/idle.png",
+        "frameWidth": 26,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "idle_down": {
+        "file": "sprites/lucca/idle_down.png",
+        "frameWidth": 36,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "idle_up": {
+        "file": "sprites/lucca/idle_up.png",
+        "frameWidth": 32,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "walk": {
+        "file": "sprites/lucca/walk.png",
+        "frameWidth": 30,
+        "frameHeight": 64,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_down": {
+        "file": "sprites/lucca/walk_down.png",
+        "frameWidth": 36,
+        "frameHeight": 64,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_up": {
+        "file": "sprites/lucca/walk_up.png",
+        "frameWidth": 34,
+        "frameHeight": 64,
+        "frames": 2,
+        "fps": 6
+      },
+      "attack": {
+        "file": "sprites/lucca/attack.png",
+        "frameWidth": 42,
+        "frameHeight": 64,
+        "frames": 3,
+        "fps": 10
+      },
+      "cast": {
+        "file": "sprites/lucca/cast.png",
+        "frameWidth": 32,
+        "frameHeight": 62,
+        "frames": 1,
+        "fps": 5
+      },
+      "hurt": {
+        "file": "sprites/lucca/hurt.png",
+        "frameWidth": 42,
+        "frameHeight": 58,
+        "frames": 1,
+        "fps": 5
+      },
+      "parry": {
+        "file": "sprites/lucca/parry.png",
+        "frameWidth": 42,
+        "frameHeight": 62,
+        "frames": 1,
+        "fps": 4
+      },
+      "ko": {
+        "file": "sprites/lucca/ko.png",
+        "frameWidth": 56,
+        "frameHeight": 30,
+        "frames": 1,
+        "fps": 5
+      },
+      "victory": {
+        "file": "sprites/lucca/victory.png",
+        "frameWidth": 34,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 4
+      }
+    },
+    "portrait": "sprites/lucca/portrait.png"
+  },
+  "frog": {
+    "facesLeft": true,
+    "scale": 0.5,
+    "anims": {
+      "idle": {
+        "file": "sprites/frog/idle.png",
+        "frameWidth": 30,
+        "frameHeight": 48,
+        "frames": 1,
+        "fps": 5
+      },
+      "idle_down": {
+        "file": "sprites/frog/idle_down.png",
+        "frameWidth": 32,
+        "frameHeight": 48,
+        "frames": 1,
+        "fps": 5
+      },
+      "idle_up": {
+        "file": "sprites/frog/idle_up.png",
+        "frameWidth": 32,
+        "frameHeight": 48,
+        "frames": 1,
+        "fps": 5
+      },
+      "walk": {
+        "file": "sprites/frog/walk.png",
+        "frameWidth": 48,
+        "frameHeight": 48,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_down": {
+        "file": "sprites/frog/walk_down.png",
+        "frameWidth": 40,
+        "frameHeight": 46,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_up": {
+        "file": "sprites/frog/walk_up.png",
+        "frameWidth": 38,
+        "frameHeight": 48,
+        "frames": 6,
+        "fps": 6
+      },
+      "attack": {
+        "file": "sprites/frog/attack.png",
+        "frameWidth": 88,
+        "frameHeight": 48,
+        "frames": 3,
+        "fps": 10
+      },
+      "cast": {
+        "file": "sprites/frog/cast.png",
+        "frameWidth": 54,
+        "frameHeight": 48,
+        "frames": 2,
+        "fps": 6
+      },
+      "hurt": {
+        "file": "sprites/frog/hurt.png",
+        "frameWidth": 38,
+        "frameHeight": 44,
+        "frames": 1,
+        "fps": 5
+      },
+      "parry": {
+        "file": "sprites/frog/parry.png",
+        "frameWidth": 52,
+        "frameHeight": 46,
+        "frames": 1,
+        "fps": 4
+      },
+      "ko": {
+        "file": "sprites/frog/ko.png",
+        "frameWidth": 54,
+        "frameHeight": 28,
+        "frames": 1,
+        "fps": 5
+      },
+      "victory": {
+        "file": "sprites/frog/victory.png",
+        "frameWidth": 62,
+        "frameHeight": 52,
+        "frames": 2,
+        "fps": 4
+      }
+    },
+    "portrait": "sprites/frog/portrait.png"
+  },
+  "robo": {
+    "facesLeft": true,
+    "scale": 0.5,
+    "anims": {
+      "idle": {
+        "file": "sprites/robo/idle.png",
+        "frameWidth": 48,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "idle_down": {
+        "file": "sprites/robo/idle_down.png",
+        "frameWidth": 48,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "idle_up": {
+        "file": "sprites/robo/idle_up.png",
+        "frameWidth": 48,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "walk": {
+        "file": "sprites/robo/walk.png",
+        "frameWidth": 60,
+        "frameHeight": 62,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_down": {
+        "file": "sprites/robo/walk_down.png",
+        "frameWidth": 54,
+        "frameHeight": 62,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_up": {
+        "file": "sprites/robo/walk_up.png",
+        "frameWidth": 50,
+        "frameHeight": 62,
+        "frames": 6,
+        "fps": 6
+      },
+      "attack": {
+        "file": "sprites/robo/attack.png",
+        "frameWidth": 78,
+        "frameHeight": 64,
+        "frames": 5,
+        "fps": 14
+      },
+      "cast": {
+        "file": "sprites/robo/cast.png",
+        "frameWidth": 48,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "hurt": {
+        "file": "sprites/robo/hurt.png",
+        "frameWidth": 80,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "parry": {
+        "file": "sprites/robo/parry.png",
+        "frameWidth": 56,
+        "frameHeight": 60,
+        "frames": 1,
+        "fps": 5
+      },
+      "ko": {
+        "file": "sprites/robo/ko.png",
+        "frameWidth": 88,
+        "frameHeight": 48,
+        "frames": 1,
+        "fps": 5
+      },
+      "victory": {
+        "file": "sprites/robo/victory.png",
+        "frameWidth": 78,
+        "frameHeight": 64,
+        "frames": 2,
+        "fps": 4
+      }
+    },
+    "portrait": "sprites/robo/portrait.png"
+  },
+  "ayla": {
+    "facesLeft": true,
+    "scale": 0.5,
+    "anims": {
+      "idle": {
+        "file": "sprites/ayla/idle.png",
+        "frameWidth": 58,
+        "frameHeight": 64,
+        "frames": 4,
+        "fps": 6
+      },
+      "idle_down": {
+        "file": "sprites/ayla/idle_down.png",
+        "frameWidth": 60,
+        "frameHeight": 64,
+        "frames": 4,
+        "fps": 6
+      },
+      "idle_up": {
+        "file": "sprites/ayla/idle_up.png",
+        "frameWidth": 48,
+        "frameHeight": 64,
+        "frames": 4,
+        "fps": 6
+      },
+      "walk": {
+        "file": "sprites/ayla/walk.png",
+        "frameWidth": 42,
+        "frameHeight": 64,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_down": {
+        "file": "sprites/ayla/walk_down.png",
+        "frameWidth": 38,
+        "frameHeight": 64,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_up": {
+        "file": "sprites/ayla/walk_up.png",
+        "frameWidth": 34,
+        "frameHeight": 62,
+        "frames": 6,
+        "fps": 6
+      },
+      "attack": {
+        "file": "sprites/ayla/attack.png",
+        "frameWidth": 82,
+        "frameHeight": 64,
+        "frames": 3,
+        "fps": 4
+      },
+      "cast": {
+        "file": "sprites/ayla/cast.png",
+        "frameWidth": 50,
+        "frameHeight": 64,
+        "frames": 2,
+        "fps": 6
+      },
+      "hurt": {
+        "file": "sprites/ayla/hurt.png",
+        "frameWidth": 60,
+        "frameHeight": 60,
+        "frames": 1,
+        "fps": 5
+      },
+      "parry": {
+        "file": "sprites/ayla/parry.png",
+        "frameWidth": 50,
+        "frameHeight": 60,
+        "frames": 1,
+        "fps": 5
+      },
+      "ko": {
+        "file": "sprites/ayla/ko.png",
+        "frameWidth": 66,
+        "frameHeight": 30,
+        "frames": 1,
+        "fps": 5
+      },
+      "victory": {
+        "file": "sprites/ayla/victory.png",
+        "frameWidth": 54,
+        "frameHeight": 72,
+        "frames": 3,
+        "fps": 4
+      }
+    },
+    "portrait": "sprites/ayla/portrait.png"
+  },
+  "magus": {
+    "facesLeft": true,
+    "scale": 0.5,
+    "anims": {
+      "idle": {
+        "file": "sprites/magus/idle.png",
+        "frameWidth": 30,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "idle_down": {
+        "file": "sprites/magus/idle_down.png",
+        "frameWidth": 42,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "idle_up": {
+        "file": "sprites/magus/idle_up.png",
+        "frameWidth": 44,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 5
+      },
+      "walk": {
+        "file": "sprites/magus/walk.png",
+        "frameWidth": 48,
+        "frameHeight": 64,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_down": {
+        "file": "sprites/magus/walk_down.png",
+        "frameWidth": 52,
+        "frameHeight": 64,
+        "frames": 6,
+        "fps": 6
+      },
+      "walk_up": {
+        "file": "sprites/magus/walk_up.png",
+        "frameWidth": 48,
+        "frameHeight": 64,
+        "frames": 6,
+        "fps": 6
+      },
+      "attack": {
+        "file": "sprites/magus/attack.png",
+        "frameWidth": 84,
+        "frameHeight": 64,
+        "frames": 4,
+        "fps": 12
+      },
+      "cast": {
+        "file": "sprites/magus/cast.png",
+        "frameWidth": 72,
+        "frameHeight": 64,
+        "frames": 4,
+        "fps": 5
+      },
+      "hurt": {
+        "file": "sprites/magus/hurt.png",
+        "frameWidth": 54,
+        "frameHeight": 62,
+        "frames": 1,
+        "fps": 5
+      },
+      "parry": {
+        "file": "sprites/magus/parry.png",
+        "frameWidth": 56,
+        "frameHeight": 64,
+        "frames": 1,
+        "fps": 4
+      },
+      "ko": {
+        "file": "sprites/magus/ko.png",
+        "frameWidth": 90,
+        "frameHeight": 32,
+        "frames": 1,
+        "fps": 5
+      },
+      "victory": {
+        "file": "sprites/magus/victory.png",
+        "frameWidth": 36,
+        "frameHeight": 64,
+        "frames": 2,
+        "fps": 7
+      }
+    },
+    "portrait": "sprites/magus/portrait.png"
+  }
+}

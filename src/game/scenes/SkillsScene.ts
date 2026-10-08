@@ -1,8 +1,8 @@
 import * as Phaser from 'phaser';
 import { CHARACTERS, ELEMENT_LABEL, KIND_LABEL, ROSTER, SLOT_LABEL, SLOT_ORDER } from '../../shared/characters';
 import type { Ability } from '../../shared/types';
-import { animKey, standingTexture } from '../sprites';
-import { button, COLORS, fit, HEIGHT, panel, text, timeBackground, WIDTH, type Button } from '../ui';
+import { animKey, spriteScale, standingTexture } from '../sprites';
+import { button, COLORS, HEIGHT, panel, text, timeBackground, WIDTH, type Button } from '../ui';
 
 const SLOT_COLOR = { attack: '#ffffff', parry: '#8fe0ff', skill: '#c08aff', ultimate: '#f5d04a' } as const;
 export const P1_KEYS = 'YUIO';
@@ -66,7 +66,7 @@ export class SkillsScene extends Phaser.Scene {
 
     add(panel(this, x, y, 716, 476));
     const first = standingTexture(this, c.id);
-    add(fit(this.add.sprite(x + 66, y + 84, first.key, first.frame).play(animKey(c.id, 'idle')), 96, 112));
+    add(this.add.sprite(x + 66, y + 84, first.key, first.frame).play(animKey(c.id, 'idle')).setScale(4 * spriteScale(this, c.id)));
     add(text(this, x + 140, y + 18, c.name.toUpperCase(), 16, COLORS.gold));
     add(text(this, x + 140, y + 42, `${c.title} · ${c.era} · ${ELEMENT_LABEL[c.element]}`, 8, '#8fa8ff'));
     add(text(this, x + 140, y + 62, c.bio, 8, COLORS.text, { wordWrap: { width: 550 } }));

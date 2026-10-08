@@ -18,7 +18,7 @@ import {
   type World,
 } from '../../shared/sim';
 import type { Slot, StatusId } from '../../shared/types';
-import { animKey, facesLeft, standingTexture, type AnimName } from '../sprites';
+import { animKey, facesLeft, spriteScale, standingTexture, type AnimName } from '../sprites';
 import type { ArenaData } from '../types';
 import { bar, button, COLORS, HEIGHT, panel, text, WIDTH } from '../ui';
 
@@ -354,7 +354,7 @@ export class ArenaScene extends Phaser.Scene {
       const anim = this.animFor(f);
       const sideView = !anim.endsWith('_up') && !anim.endsWith('_down');
       const flip = sideView && (f.lookX < 0) !== facesLeft(this, f.characterId);
-      v.sprite.setPosition(drawX, drawY - lift).setScale(scale).setFlipX(flip).setDepth(drawY);
+      v.sprite.setPosition(drawX, drawY - lift).setScale(scale * spriteScale(this, f.characterId)).setFlipX(flip).setDepth(drawY);
       v.shadow.setPosition(drawX, drawY).setScale((scale / BASE_SCALE) * (1 - lift / 400)).setDepth(drawY - 1);
       if (anim !== v.anim) {
         v.anim = anim;

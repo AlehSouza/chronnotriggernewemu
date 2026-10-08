@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { CHARACTERS, ELEMENT_LABEL, ROSTER, SLOT_LABEL, SLOT_ORDER } from '../../shared/characters';
 import type { CharacterId } from '../../shared/types';
-import { animKey, facesLeft, portraitKey, standingTexture } from '../sprites';
+import { animKey, facesLeft, portraitKey, spriteScale, standingTexture } from '../sprites';
 import type { ArenaData, SelectData } from '../types';
 import { bar, COLORS, fit, HEIGHT, panel, text, timeBackground, WIDTH } from '../ui';
 
@@ -108,7 +108,7 @@ export class SelectScene extends Phaser.Scene {
       update: (id, locked, pulse = false) => {
         const c = CHARACTERS[id];
         sprite.play(animKey(id, locked ? 'victory' : 'idle'), true).setFlipX((side === 'right') !== facesLeft(this, id));
-        fit(sprite, 112, 168);
+        sprite.setScale(4 * spriteScale(this, id));
         name.setText(c.name.toUpperCase());
         title.setText(`${c.title} · ${c.era}`);
         info.setText(

@@ -1,6 +1,6 @@
 // Gera standalone/index.html + game.js: o jogo inteiro numa página estática, sem Next.js.
 import { build } from 'esbuild';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 
 mkdirSync('standalone', { recursive: true });
 await build({
@@ -28,4 +28,5 @@ writeFileSync(
 </html>
 `,
 );
+if (existsSync('public/sprites')) cpSync('public/sprites', 'standalone/sprites', { recursive: true });
 console.log('standalone/ pronto');

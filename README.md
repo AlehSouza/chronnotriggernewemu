@@ -53,22 +53,22 @@ Todos os números ficam em `RULES` (`src/shared/sim.ts`) e nos personagens (`src
 
 ## Sprites
 
-Hoje cada personagem é um boneco pixelado gerado por código. Para usar os sprites reais do
-[videogamesprites.net](https://www.videogamesprites.net/ChronoTrigger/Party/):
+Os sprites vêm dos GIFs em `public/assets/Party/<Nome>/` (rip do
+[videogamesprites.net](https://www.videogamesprites.net/ChronoTrigger/Party/)). Depois de mexer neles, rode:
 
-1. Baixe os GIFs de cada personagem para `sprites-src/<id>/` (ex.: `sprites-src/crono/Crono - Victory.gif`).
-2. Rode `npm run sprites`. O script converte cada GIF animado numa spritesheet em `public/sprites/<id>/`,
-   escolhe a animação pelo nome do arquivo (parado e andando de lado, de frente e de costas, ataque, magia, dano,
-   defesa, nocaute, vitória) e gera
-   `src/game/sprites.generated.json`.
-3. Se o nome não bater, crie `sprites-src/<id>/map.json`, por exemplo
-   `{ "idle": "Crono - Battle.gif", "facesLeft": true }`.
+```bash
+npm run sprites
+```
 
-Animação sem arquivo continua usando o boneco. Os sprites de Chrono Trigger pertencem à Square Enix; mantenha o
-projeto como fã e sem fins comerciais.
+O script (`scripts/import-sprites.mjs`) tem um mapa explícito de qual GIF vira cada animação do jogo (parado e
+andando de lado, de frente e de costas, ataque, magia, dano, defesa, nocaute, vitória). Uma animação pode juntar
+vários GIFs parados em sequência (ex.: `Ready1..3` do Crono viram o golpe de espada). Cada quadro é alinhado
+pelo pé do personagem, e o resultado vai para `public/sprites/<id>/` e `src/game/sprites.generated.json`.
+O `Status.gif` de cada um vira o retrato da seleção. Para trocar uma pose, edite o `MAP` no script.
+
+Os sprites de Chrono Trigger pertencem à Square Enix; mantenha o projeto como fã e sem fins comerciais.
 
 ## Próximos passos
 
-- Importar os sprites reais.
 - Servidor `server/` com Node + socket.io rodando `src/shared/sim.ts` e os eventos de `src/shared/protocol.ts`.
   Ele roda à parte do Next (hospedagem estática não mantém WebSocket).

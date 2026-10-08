@@ -62,6 +62,11 @@ export function facesLeft(scene: Phaser.Scene, id: CharacterId): boolean {
   return !!SPRITE_MANIFEST[id]?.facesLeft && scene.textures.exists(realSheetKey(id, 'idle'));
 }
 
+/** Escala do sprite real em relação ao boneco provisório. */
+export function spriteScale(scene: Phaser.Scene, id: CharacterId): number {
+  return scene.textures.exists(realSheetKey(id, 'idle')) ? (SPRITE_MANIFEST[id]?.scale ?? 1) : 1;
+}
+
 export function preloadRealSprites(loader: Phaser.Loader.LoaderPlugin): void {
   for (const id of ROSTER) {
     const entry = SPRITE_MANIFEST[id];
